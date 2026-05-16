@@ -1,0 +1,1762 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WAIG ACTION GUIDE</title>
+<style>
+
+:root {
+  --ink: #1f2937;
+  --muted: #6b7280;
+  --blue: #1f4e79;
+  --blue2: #eaf3fb;
+  --line: #d7dde8;
+  --soft: #f7f9fc;
+  --accent: #f2f6fb;
+}
+
+@page {
+  size: A4;
+  margin: 14mm 13mm 15mm 13mm;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 11pt;
+}
+
+body {
+  margin: 0 auto;
+  max-width: 980px;
+  color: var(--ink);
+  font-family: "BIZ UDPGothic", "BIZ UDPゴシック", "Meiryo", "メイリオ", "Yu Gothic", "YuGothic", sans-serif;
+  line-height: 1.72;
+  background: #fff;
+}
+
+main {
+  padding: 28px 34px 44px;
+}
+
+h1, h2, h3 {
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+h1 {
+  margin: 2.2rem 0 1rem;
+  color: var(--blue);
+  font-size: 1.75rem;
+  border-bottom: 3px solid var(--blue);
+  padding-bottom: .35rem;
+}
+
+h1:first-child {
+  margin-top: 0;
+}
+
+h2 {
+  margin: 1.25rem 0 .65rem;
+  padding: .45rem .7rem;
+  color: #183b5b;
+  background: var(--blue2);
+  border-left: 6px solid var(--blue);
+  border-radius: 6px;
+  font-size: 1.08rem;
+}
+
+h3 {
+  margin: .9rem 0 .25rem;
+  font-size: 1rem;
+  color: #243b53;
+}
+
+p {
+  margin: .15rem 0 .7rem;
+}
+
+ul {
+  margin: .35rem 0 .9rem 1.25rem;
+  padding-left: .7rem;
+}
+
+li {
+  margin: .18rem 0;
+  padding-left: .15rem;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 1.25rem 0;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: .7rem 0 1rem;
+  table-layout: fixed;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  font-size: .94rem;
+}
+
+.data-table th {
+  background: var(--blue);
+  color: #fff;
+  font-weight: 700;
+  padding: .45rem .55rem;
+  border: 1px solid var(--blue);
+  text-align: left;
+}
+
+.data-table td {
+  vertical-align: top;
+  padding: .5rem .55rem;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.data-table tr:nth-child(even) td {
+  background: var(--soft);
+}
+
+.data-table strong {
+  color: #143c5f;
+}
+
+.card-section {
+  page-break-before: always !important;
+  break-before: page !important;
+  display: block;
+}
+
+.card-section.first-card {
+  page-break-before: auto !important;
+  break-before: auto !important;
+}
+
+.cover {
+  min-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  page-break-after: always;
+}
+
+.cover .project {
+  color: var(--blue);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+}
+
+.cover .title {
+  margin: 1rem 0;
+  font-size: 2.4rem;
+  color: var(--blue);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.cover .credit {
+  margin-top: 2.4rem;
+  color: var(--muted);
+  font-size: .95rem;
+}
+
+.notice {
+  margin: 1rem 0 1.4rem;
+  padding: .8rem 1rem;
+  background: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: #263847;
+}
+
+@media print {
+  body {
+    max-width: none;
+  }
+
+  main {
+    padding: 0;
+  }
+
+  .card-section {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .card-section.first-card {
+  page-break-before: auto !important;
+  break-before: auto !important;
+}
+
+  table,
+  .data-table {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  h1, h2, h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    orphans: 2;
+    widows: 2;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+@media screen {
+  body {
+    background: #eef2f7;
+  }
+  main {
+    background: white;
+    box-shadow: 0 8px 30px rgba(15, 23, 42, .12);
+    min-height: 100vh;
+  }
+}
+
+</style>
+</head>
+<body>
+<main>
+  <section class="cover">
+    <div class="project">WEB ANALYTICS IMPROVEMENT GAME</div>
+    <div class="title">ACTION GUIDE</div>
+    <div>AI比較・活用型 実践シミュレーション</div>
+    <div class="credit">
+      Created by KozyWorks<br><br>
+      Educational Use Welcome<br>
+      See LICENSE.md for details.
+    </div>
+  </section>
+
+  <div class="notice no-print">
+    ブラウザの印刷機能で「PDFに保存」を選ぶと配布用PDFを作成できます。背景色を印刷する設定を有効にしてください。
+  </div>
+<h1>このガイドについて</h1>
+<p>本ガイドは、WEB ANALYTICS IMPROVEMENT GAME に登場する</p>
+<p>Action Card（施策カード）の学習用ガイドである。</p>
+<p>本ゲームは、単に「正しい施策」を覚えることを目的としていない。</p>
+<p>重要なのは、</p>
+<ul>
+<li>どの施策を選ぶべきか</li>
+<li>なぜその施策を選ぶのか</li>
+<li>どのようなリスクがあるのか</li>
+<li>クライアントや上司へどう説明するのか</li>
+<li>AIをどのように活用するのか</li>
+</ul>
+<p>を考えながら、</p>
+<p>限られた条件の中で意思決定することである。</p>
+<p>そのため本ガイドは、</p>
+<p>施策知識だけでなく、</p>
+<ul>
+<li>提案力</li>
+<li>説明力</li>
+<li>判断力</li>
+<li>AI活用力</li>
+<li>実務での注意点</li>
+</ul>
+<p>を学ぶための</p>
+<p>「実践型Web改善ガイド」</p>
+<p>として設計している。</p>
+<p>初心者は施策理解の補助教材として、</p>
+<p>実務者は提案・改善の振り返り資料として、</p>
+<p>それぞれ異なる視点で活用できる。</p>
+<p>また、本ガイドは</p>
+<p>単なる施策解説ではなく、</p>
+<ul>
+<li>「なぜその施策を選ぶのか」</li>
+<li>「どのような順番で実施するのか」</li>
+<li>「どのKPIへ影響するのか」</li>
+<li>「AIをどう実務へ組み込むのか」</li>
+</ul>
+<p>を考えるための</p>
+<p>“意思決定トレーニング教材”</p>
+<p>として活用することを想定している。</p>
+<p>そのため、各カードは</p>
+<p>「読む」だけではなく、</p>
+<ul>
+<li>比較する</li>
+<li>選択する</li>
+<li>説明する</li>
+<li>提案する</li>
+<li>振り返る</li>
+</ul>
+<p>ことを前提に設計されている。</p>
+<h1>各カードの構成</h1>
+<p>各カードは以下の8項目で統一して整理している。</p>
+<p>1. この施策とは</p>
+<p>2. 主な目的</p>
+<p>3. 効果が出やすいケース</p>
+<p>4. 活用例（具体施策＋AI活用）</p>
+<p>5. クライアント説明のポイント</p>
+<p>6. リスクと失敗例</p>
+<p>7. ゲーム連携情報</p>
+<p>8. 学習キーワード</p>
+<h1>ACTION GUIDE INDEX</h1>
+<table class="data-table">
+<thead><tr><th>ID</th><th>施策名</th></tr></thead>
+<tbody>
+<tr><td>A01</td><td>SEO強化</td></tr>
+<tr><td>A02</td><td>SNS運用強化</td></tr>
+<tr><td>A03</td><td>広告出稿拡大</td></tr>
+<tr><td>A04</td><td>LP改善</td></tr>
+<tr><td>A05</td><td>レビュー強化</td></tr>
+<tr><td>A06</td><td>メールマーケティング</td></tr>
+<tr><td>A07</td><td>サイト高速化</td></tr>
+<tr><td>A08</td><td>導線改善</td></tr>
+<tr><td>A09</td><td>動画活用</td></tr>
+<tr><td>A10</td><td>チャット対応強化</td></tr>
+<tr><td>A11</td><td>パーソナライズ</td></tr>
+<tr><td>A12</td><td>リターゲティング</td></tr>
+<tr><td>A13</td><td>比較表改善</td></tr>
+<tr><td>A14</td><td>カテゴリ整理</td></tr>
+<tr><td>A15</td><td>キャンペーン企画</td></tr>
+<tr><td>A16</td><td>会員特典強化</td></tr>
+<tr><td>A17</td><td>ABテスト実施</td></tr>
+<tr><td>A18</td><td>検索機能改善</td></tr>
+<tr><td>A19</td><td>スマホUI改善</td></tr>
+<tr><td>A20</td><td>在庫表示改善</td></tr>
+<tr><td>A21</td><td>ブランドページ強化</td></tr>
+<tr><td>A22</td><td>FAQ強化</td></tr>
+<tr><td>A23</td><td>フォーム改善</td></tr>
+<tr><td>A24</td><td>アクセス解析強化</td></tr>
+</tbody></table>
+<section class="card-section first-card"><section class="card-section">
+<h1>A01｜SEO強化</h1>
+<h2>1. この施策とは</h2>
+<p>SEO強化を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A02｜SNS運用強化</h1>
+<h2>1. この施策とは</h2>
+<p>SNS運用強化を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A03｜広告出稿拡大</h1>
+<h2>1. この施策とは</h2>
+<p>広告出稿拡大を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A04｜LP改善</h1>
+<h2>1. この施策とは</h2>
+<p>LP改善を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A05｜レビュー強化</h1>
+<h2>1. この施策とは</h2>
+<p>レビュー強化を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A06｜メールマーケティング</h1>
+<h2>1. この施策とは</h2>
+<p>メールマーケティングを通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A07｜サイト高速化</h1>
+<h2>1. この施策とは</h2>
+<p>サイト高速化を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A08｜導線改善</h1>
+<h2>1. この施策とは</h2>
+<p>導線改善を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A09｜動画活用</h1>
+<h2>1. この施策とは</h2>
+<p>動画活用を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A10｜チャット対応強化</h1>
+<h2>1. この施策とは</h2>
+<p>チャット対応強化を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A11｜パーソナライズ</h1>
+<h2>1. この施策とは</h2>
+<p>パーソナライズを通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A12｜リターゲティング</h1>
+<h2>1. この施策とは</h2>
+<p>リターゲティングを通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A13｜比較表改善</h1>
+<h2>1. この施策とは</h2>
+<p>比較表改善を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A14｜カテゴリ整理</h1>
+<h2>1. この施策とは</h2>
+<p>カテゴリ整理を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A15｜キャンペーン企画</h1>
+<h2>1. この施策とは</h2>
+<p>キャンペーン企画を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A16｜会員特典強化</h1>
+<h2>1. この施策とは</h2>
+<p>会員特典強化を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A17｜ABテスト実施</h1>
+<h2>1. この施策とは</h2>
+<p>ABテスト実施を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A18｜検索機能改善</h1>
+<h2>1. この施策とは</h2>
+<p>検索機能改善を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A19｜スマホUI改善</h1>
+<h2>1. この施策とは</h2>
+<p>スマホUI改善を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A20｜在庫表示改善</h1>
+<h2>1. この施策とは</h2>
+<p>在庫表示改善を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A21｜ブランドページ強化</h1>
+<h2>1. この施策とは</h2>
+<p>ブランドページ強化を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A22｜FAQ強化</h1>
+<h2>1. この施策とは</h2>
+<p>FAQ強化を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A23｜フォーム改善</h1>
+<h2>1. この施策とは</h2>
+<p>フォーム改善を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+
+<section class="card-section">
+<h1>A24｜アクセス解析強化</h1>
+<h2>1. この施策とは</h2>
+<p>アクセス解析強化を通じて、</p>
+<p>ユーザー体験・集客・CV改善を行う施策。</p>
+<p>単なる機能改善ではなく、</p>
+<p>事業成果へつなげることを目的とする。</p>
+<h2>2. 主な目的</h2>
+<ul>
+<li>CV改善</li>
+<li>回遊率改善</li>
+<li>ユーザー体験向上</li>
+<li>売上改善</li>
+</ul>
+<h2>3. 効果が出やすいケース</h2>
+<h3>課題が明確なサイト</h3>
+<p>改善ポイントが見えている場合、</p>
+<p>成果につながりやすい。</p>
+<h3>継続改善できるサイト</h3>
+<p>単発ではなく、</p>
+<p>継続運用できる場合に効果が出やすい。</p>
+<h2>4. 活用例（具体施策＋AI活用）</h2>
+<table class="data-table">
+<thead><tr><th>具体施策例</th><th>AI活用例</th></tr></thead>
+<tbody>
+<tr><td><strong>改善ポイント分析</strong><br>ユーザー行動や課題を分析する。</td><td>課題抽出支援</td></tr>
+<tr><td><strong>導線改善</strong><br>ユーザーが迷わない導線へ改善する。</td><td>導線案生成</td></tr>
+<tr><td><strong>FAQ整理</strong><br>不安や疑問を解消する。</td><td>FAQ生成</td></tr>
+<tr><td><strong>比較情報整理</strong><br>比較検討しやすくする。</td><td>比較表生成</td></tr>
+</tbody></table>
+<h2>5. クライアント説明のポイント</h2>
+<h3>目的を明確に説明する</h3>
+<p>なぜ実施するのかを共有する。</p>
+<h3>KPIとの関係を説明する</h3>
+<p>売上やCVとの関係を示す。</p>
+<h3>継続改善であることを説明する</h3>
+<p>1回で完成しないことを共有する。</p>
+<h2>6. リスクと失敗例</h2>
+<table class="data-table">
+<thead><tr><th>副作用</th><th>よくある失敗</th></tr></thead>
+<tbody>
+<tr><td><strong>作業負荷が増える場合がある</strong><br>改善運用には継続対応が必要。</td><td><strong>施策だけ実施して分析しない</strong><br>改善後の検証を行わない。</td></tr>
+<tr><td><strong>短期成果が出ないことがある</strong><br>成果まで時間が必要。</td><td><strong>ユーザー視点が不足する</strong><br>社内目線だけで改善してしまう。</td></tr>
+</tbody></table>
+<h2>7. ゲーム連携情報</h2>
+<h3>主な関連KPI</h3>
+<ul>
+<li>CVR</li>
+<li>回遊率</li>
+<li>一般流入</li>
+</ul>
+<h3>関連カード</h3>
+<ul>
+<li>A04｜LP改善</li>
+<li>A17｜ABテスト実施</li>
+</ul>
+<h2>8. 学習キーワード</h2>
+<p>UX / CVR / 導線改善 / AI活用 / 比較検討</p>
+</main>
+</body>
+</html>

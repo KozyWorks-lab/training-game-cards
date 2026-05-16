@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ECミッションカード一覧｜確定版</title>
+  <meta name="author" content="KozyWorks">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --text: #222;
+      --muted: #666;
+      --line: #ddd;
+      --bg: #fff;
+      --soft: #f7f7f7;
+      --mission: #1f5fa8;
+      --general: #eef7ff;
+      --general-line: #b6d8ff;
+      --ad: #fff3e8;
+      --ad-line: #ffd0a6;
+      --result: #f0fff4;
+      --result-line: #b7e4c7;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #f2f2f2;
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans JP", sans-serif;
+      line-height: 1.55;
+    }
+
+    .page-title {
+      width: 100%;
+      max-width: none;
+      margin: 0 auto 20px;
+    }
+
+    .page-title h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    .page-title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card-grid {
+      width: 100%;
+      max-width: none;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-left: 8px solid var(--mission);
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 640px;
+      page-break-inside: avoid;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .card-topline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .card-id,
+    .card-type,
+    .difficulty-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--soft);
+      white-space: nowrap;
+    }
+
+    .difficulty-badge {
+      color: #fff;
+      border: none;
+      background: #555;
+    }
+
+    .difficulty-badge.level-basic { background: #2f855a; }
+    .difficulty-badge.level-midbasic { background: #2b6cb0; }
+    .difficulty-badge.level-middle { background: #805ad5; }
+    .difficulty-badge.level-advanced { background: #c05621; }
+    .difficulty-badge.level-hardest { background: #c53030; }
+
+    .card-title {
+      margin: 6px 0 12px;
+      font-size: 22px;
+      line-height: 1.3;
+    }
+
+    .card-section {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .card-section h3 {
+      margin: 0 0 6px;
+      font-size: 15px;
+    }
+
+    .card-section p {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .mission-goal {
+      background: #f8fbff;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .card-note {
+      background: #fffdf5;
+      padding: 10px;
+      border: 1px solid #f0dfaa;
+      border-radius: 8px;
+    }
+
+    .result-section {
+      background: var(--result);
+      padding: 10px;
+      border: 1px solid var(--result-line);
+      border-radius: 8px;
+    }
+
+    .compact-section {
+      margin-top: 10px;
+      padding-top: 8px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .metrics-grid span {
+      display: block;
+      padding: 5px 7px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .metrics-grid span.general {
+      background: var(--general);
+      border-color: var(--general-line);
+    }
+
+    .metrics-grid span.ad {
+      background: var(--ad);
+      border-color: var(--ad-line);
+    }
+
+    .modifier-grid span.changed {
+      font-weight: 700;
+      background: #fffbea;
+      border-color: #f5d76e;
+    }
+
+    .modifier-grid span.zero {
+      color: #888;
+    }
+
+    .site-footer {
+      width: 100%;
+      max-width: none;
+      margin: 28px auto 0;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+        background: #fff;
+      }
+
+      .card-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .card {
+        min-height: auto;
+        border-radius: 8px;
+        box-shadow: none;
+      }
+
+      .site-footer {
+        position: fixed;
+        bottom: 8px;
+        left: 0;
+        width: 100%;
+        font-size: 10px;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="page-title">
+    <h1>ECミッションカード一覧</h1>
+  </div>
+
+  <div class="card-grid">
+
+  <div class="card mission-card">
+    <div class="card-topline">
+      <div class="card-header">
+        <span class="card-id">M01</span>
+        <span class="card-type">ミッションカード</span>
+      </div>
+      <span class="difficulty-badge level-middle">中級</span>
+    </div>
+
+    <h2 class="card-title">新規立ち上げ</h2>
+
+    <section class="card-section mission-goal">
+      <h3>ミッション</h3>
+      <p>売上立ち上げ・拡大</p>
+    </section>
+
+    <section class="card-section card-note">
+      <h3>初期状態</h3>
+      <p>広告必須の状況でスタートする。</p>
+    </section>
+
+    <section class="card-section">
+      <h3>KPI初期値</h3>
+      <div class="metrics-grid">
+        <span class="general">一般流入 6,500</span>
+        <span class="ad">広告流入 2,500</span>
+        <span>総流入 9,000</span>
+        <span>離脱率 0.58</span>
+        <span>回遊率 1.45</span>
+        <span>CVR 0.012</span>
+        <span>AOV 3,800円</span>
+        <span>CPC 55円</span>
+      </div>
+    </section>
+
+    <section class="card-section result-section">
+      <h3>参考計算値</h3>
+      <div class="metrics-grid">
+        <span>売上 249,934円</span>
+        <span>広告費 137,500円</span>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <h3>ミッション補正（倍率）</h3>
+      <div class="metrics-grid modifier-grid">
+        <span class="changed">一般流入 ×1.1</span>
+        <span class="zero">広告流入 ×1</span>
+        <span class="zero">離脱率 ×1</span>
+        <span class="changed">回遊率 ×0.95</span>
+        <span class="zero">CVR ×1</span>
+        <span class="zero">AOV ×1</span>
+        <span class="zero">CPC ×1</span>
+      </div>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>特徴</h3>
+      <p>広告必須</p>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>対応する課題カード</h3>
+      <p>Q01, Q04, Q06, Q08, Q09, Q12, Q14, Q15</p>
+    </section>
+  </div>
+  <div class="card mission-card">
+    <div class="card-topline">
+      <div class="card-header">
+        <span class="card-id">M02</span>
+        <span class="card-type">ミッションカード</span>
+      </div>
+      <span class="difficulty-badge level-midbasic">初中級</span>
+    </div>
+
+    <h2 class="card-title">広告依存型</h2>
+
+    <section class="card-section mission-goal">
+      <h3>ミッション</h3>
+      <p>CPA改善</p>
+    </section>
+
+    <section class="card-section card-note">
+      <h3>初期状態</h3>
+      <p>CPC高止まりの状況でスタートする。</p>
+    </section>
+
+    <section class="card-section">
+      <h3>KPI初期値</h3>
+      <div class="metrics-grid">
+        <span class="general">一般流入 5,500</span>
+        <span class="ad">広告流入 3,500</span>
+        <span>総流入 9,000</span>
+        <span>離脱率 0.6</span>
+        <span>回遊率 1.4</span>
+        <span>CVR 0.011</span>
+        <span>AOV 4,200円</span>
+        <span>CPC 55円</span>
+      </div>
+    </section>
+
+    <section class="card-section result-section">
+      <h3>参考計算値</h3>
+      <div class="metrics-grid">
+        <span>売上 232,848円</span>
+        <span>広告費 192,500円</span>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <h3>ミッション補正（倍率）</h3>
+      <div class="metrics-grid modifier-grid">
+        <span class="zero">一般流入 ×1</span>
+        <span class="changed">広告流入 ×1.45</span>
+        <span class="zero">離脱率 ×1</span>
+        <span class="zero">回遊率 ×1</span>
+        <span class="changed">CVR ×0.9</span>
+        <span class="zero">AOV ×1</span>
+        <span class="changed">CPC ×1.2</span>
+      </div>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>特徴</h3>
+      <p>CPC高止まり</p>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>対応する課題カード</h3>
+      <p>Q02, Q03, Q06, Q07, Q10, Q13, Q17, Q18, Q19, Q20</p>
+    </section>
+  </div>
+  <div class="card mission-card">
+    <div class="card-topline">
+      <div class="card-header">
+        <span class="card-id">M03</span>
+        <span class="card-type">ミッションカード</span>
+      </div>
+      <span class="difficulty-badge level-midbasic">初中級</span>
+    </div>
+
+    <h2 class="card-title">コンテンツ型</h2>
+
+    <section class="card-section mission-goal">
+      <h3>ミッション</h3>
+      <p>CVR向上</p>
+    </section>
+
+    <section class="card-section card-note">
+      <h3>初期状態</h3>
+      <p>SEO重視の状況でスタートする。</p>
+    </section>
+
+    <section class="card-section">
+      <h3>KPI初期値</h3>
+      <div class="metrics-grid">
+        <span class="general">一般流入 8,500</span>
+        <span class="ad">広告流入 1,500</span>
+        <span>総流入 10,000</span>
+        <span>離脱率 0.54</span>
+        <span>回遊率 1.75</span>
+        <span>CVR 0.012</span>
+        <span>AOV 4,000円</span>
+        <span>CPC 40円</span>
+      </div>
+    </section>
+
+    <section class="card-section result-section">
+      <h3>参考計算値</h3>
+      <div class="metrics-grid">
+        <span>売上 386,400円</span>
+        <span>広告費 60,000円</span>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <h3>ミッション補正（倍率）</h3>
+      <div class="metrics-grid modifier-grid">
+        <span class="changed">一般流入 ×1.15</span>
+        <span class="changed">広告流入 ×0.85</span>
+        <span class="zero">離脱率 ×1</span>
+        <span class="changed">回遊率 ×1.15</span>
+        <span class="zero">CVR ×1</span>
+        <span class="zero">AOV ×1</span>
+        <span class="changed">CPC ×0.85</span>
+      </div>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>特徴</h3>
+      <p>SEO重視</p>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>対応する課題カード</h3>
+      <p>Q01, Q02, Q03, Q04, Q05, Q06, Q07, Q08, Q09, Q12, Q14, Q15, Q17, Q18</p>
+    </section>
+  </div>
+  <div class="card mission-card">
+    <div class="card-topline">
+      <div class="card-header">
+        <span class="card-id">M04</span>
+        <span class="card-type">ミッションカード</span>
+      </div>
+      <span class="difficulty-badge level-basic">初級</span>
+    </div>
+
+    <h2 class="card-title">ブランド強化</h2>
+
+    <section class="card-section mission-goal">
+      <h3>ミッション</h3>
+      <p>AOV向上</p>
+    </section>
+
+    <section class="card-section card-note">
+      <h3>初期状態</h3>
+      <p>短期弱の状況でスタートする。</p>
+    </section>
+
+    <section class="card-section">
+      <h3>KPI初期値</h3>
+      <div class="metrics-grid">
+        <span class="general">一般流入 7,500</span>
+        <span class="ad">広告流入 2,500</span>
+        <span>総流入 10,000</span>
+        <span>離脱率 0.52</span>
+        <span>回遊率 1.6</span>
+        <span>CVR 0.012</span>
+        <span>AOV 5,200円</span>
+        <span>CPC 45円</span>
+      </div>
+    </section>
+
+    <section class="card-section result-section">
+      <h3>参考計算値</h3>
+      <div class="metrics-grid">
+        <span>売上 479,232円</span>
+        <span>広告費 112,500円</span>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <h3>ミッション補正（倍率）</h3>
+      <div class="metrics-grid modifier-grid">
+        <span class="changed">一般流入 ×0.95</span>
+        <span class="zero">広告流入 ×1</span>
+        <span class="zero">離脱率 ×1</span>
+        <span class="zero">回遊率 ×1</span>
+        <span class="zero">CVR ×1</span>
+        <span class="changed">AOV ×1.05</span>
+        <span class="zero">CPC ×1</span>
+      </div>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>特徴</h3>
+      <p>短期弱</p>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>対応する課題カード</h3>
+      <p>Q05, Q10, Q11, Q13, Q16, Q19, Q20</p>
+    </section>
+  </div>
+  <div class="card mission-card">
+    <div class="card-topline">
+      <div class="card-header">
+        <span class="card-id">M05</span>
+        <span class="card-type">ミッションカード</span>
+      </div>
+      <span class="difficulty-badge level-midbasic">初中級</span>
+    </div>
+
+    <h2 class="card-title">価格競争型</h2>
+
+    <section class="card-section mission-goal">
+      <h3>ミッション</h3>
+      <p>利益改善</p>
+    </section>
+
+    <section class="card-section card-note">
+      <h3>初期状態</h3>
+      <p>割引依存の状況でスタートする。</p>
+    </section>
+
+    <section class="card-section">
+      <h3>KPI初期値</h3>
+      <div class="metrics-grid">
+        <span class="general">一般流入 6,500</span>
+        <span class="ad">広告流入 3,000</span>
+        <span>総流入 9,500</span>
+        <span>離脱率 0.61</span>
+        <span>回遊率 1.45</span>
+        <span>CVR 0.01</span>
+        <span>AOV 3,400円</span>
+        <span>CPC 60円</span>
+      </div>
+    </section>
+
+    <section class="card-section result-section">
+      <h3>参考計算値</h3>
+      <div class="metrics-grid">
+        <span>売上 182,656円</span>
+        <span>広告費 180,000円</span>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <h3>ミッション補正（倍率）</h3>
+      <div class="metrics-grid modifier-grid">
+        <span class="zero">一般流入 ×1</span>
+        <span class="changed">広告流入 ×1.25</span>
+        <span class="zero">離脱率 ×1</span>
+        <span class="zero">回遊率 ×1</span>
+        <span class="changed">CVR ×0.95</span>
+        <span class="zero">AOV ×1</span>
+        <span class="changed">CPC ×1.2</span>
+      </div>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>特徴</h3>
+      <p>割引依存</p>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>対応する課題カード</h3>
+      <p>Q05, Q10, Q11, Q13, Q16, Q19, Q20</p>
+    </section>
+  </div>
+  <div class="card mission-card">
+    <div class="card-topline">
+      <div class="card-header">
+        <span class="card-id">M06</span>
+        <span class="card-type">ミッションカード</span>
+      </div>
+      <span class="difficulty-badge level-middle">中級</span>
+    </div>
+
+    <h2 class="card-title">リピーター重視</h2>
+
+    <section class="card-section mission-goal">
+      <h3>ミッション</h3>
+      <p>LTV向上</p>
+    </section>
+
+    <section class="card-section card-note">
+      <h3>初期状態</h3>
+      <p>新規弱の状況でスタートする。</p>
+    </section>
+
+    <section class="card-section">
+      <h3>KPI初期値</h3>
+      <div class="metrics-grid">
+        <span class="general">一般流入 7,000</span>
+        <span class="ad">広告流入 1,000</span>
+        <span>総流入 8,000</span>
+        <span>離脱率 0.53</span>
+        <span>回遊率 1.7</span>
+        <span>CVR 0.013</span>
+        <span>AOV 4,800円</span>
+        <span>CPC 35円</span>
+      </div>
+    </section>
+
+    <section class="card-section result-section">
+      <h3>参考計算値</h3>
+      <div class="metrics-grid">
+        <span>売上 398,861円</span>
+        <span>広告費 35,000円</span>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <h3>ミッション補正（倍率）</h3>
+      <div class="metrics-grid modifier-grid">
+        <span class="changed">一般流入 ×1.05</span>
+        <span class="changed">広告流入 ×0.85</span>
+        <span class="zero">離脱率 ×1</span>
+        <span class="changed">回遊率 ×1.05</span>
+        <span class="zero">CVR ×1</span>
+        <span class="zero">AOV ×1</span>
+        <span class="zero">CPC ×1</span>
+      </div>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>特徴</h3>
+      <p>新規弱</p>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>対応する課題カード</h3>
+      <p>Q01, Q03, Q04, Q07, Q08, Q12, Q13, Q16, Q17, Q18</p>
+    </section>
+  </div>
+  <div class="card mission-card">
+    <div class="card-topline">
+      <div class="card-header">
+        <span class="card-id">M07</span>
+        <span class="card-type">ミッションカード</span>
+      </div>
+      <span class="difficulty-badge level-advanced">上級</span>
+    </div>
+
+    <h2 class="card-title">改善停滞</h2>
+
+    <section class="card-section mission-goal">
+      <h3>ミッション</h3>
+      <p>全体改善</p>
+    </section>
+
+    <section class="card-section card-note">
+      <h3>初期状態</h3>
+      <p>構造問題の状況でスタートする。</p>
+    </section>
+
+    <section class="card-section">
+      <h3>KPI初期値</h3>
+      <div class="metrics-grid">
+        <span class="general">一般流入 7,000</span>
+        <span class="ad">広告流入 2,500</span>
+        <span>総流入 9,500</span>
+        <span>離脱率 0.64</span>
+        <span>回遊率 1.35</span>
+        <span>CVR 0.009</span>
+        <span>AOV 4,200円</span>
+        <span>CPC 55円</span>
+      </div>
+    </section>
+
+    <section class="card-section result-section">
+      <h3>参考計算値</h3>
+      <div class="metrics-grid">
+        <span>売上 174,523円</span>
+        <span>広告費 137,500円</span>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <h3>ミッション補正（倍率）</h3>
+      <div class="metrics-grid modifier-grid">
+        <span class="zero">一般流入 ×1</span>
+        <span class="zero">広告流入 ×1</span>
+        <span class="changed">離脱率 ×1.15</span>
+        <span class="zero">回遊率 ×1</span>
+        <span class="changed">CVR ×0.95</span>
+        <span class="zero">AOV ×1</span>
+        <span class="zero">CPC ×1</span>
+      </div>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>特徴</h3>
+      <p>構造問題</p>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>対応する課題カード</h3>
+      <p>Q02, Q04, Q06, Q14, Q15, Q17</p>
+    </section>
+  </div>
+  <div class="card mission-card">
+    <div class="card-topline">
+      <div class="card-header">
+        <span class="card-id">M08</span>
+        <span class="card-type">ミッションカード</span>
+      </div>
+      <span class="difficulty-badge level-middle">中級</span>
+    </div>
+
+    <h2 class="card-title">急成長</h2>
+
+    <section class="card-section mission-goal">
+      <h3>ミッション</h3>
+      <p>利益維持</p>
+    </section>
+
+    <section class="card-section card-note">
+      <h3>初期状態</h3>
+      <p>変動大の状況でスタートする。</p>
+    </section>
+
+    <section class="card-section">
+      <h3>KPI初期値</h3>
+      <div class="metrics-grid">
+        <span class="general">一般流入 8,500</span>
+        <span class="ad">広告流入 3,500</span>
+        <span>総流入 12,000</span>
+        <span>離脱率 0.58</span>
+        <span>回遊率 1.45</span>
+        <span>CVR 0.011</span>
+        <span>AOV 3,900円</span>
+        <span>CPC 60円</span>
+      </div>
+    </section>
+
+    <section class="card-section result-section">
+      <h3>参考計算値</h3>
+      <div class="metrics-grid">
+        <span>売上 313,513円</span>
+        <span>広告費 210,000円</span>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <h3>ミッション補正（倍率）</h3>
+      <div class="metrics-grid modifier-grid">
+        <span class="changed">一般流入 ×1.1</span>
+        <span class="changed">広告流入 ×1.25</span>
+        <span class="zero">離脱率 ×1</span>
+        <span class="zero">回遊率 ×1</span>
+        <span class="zero">CVR ×1</span>
+        <span class="zero">AOV ×1</span>
+        <span class="changed">CPC ×0.9</span>
+      </div>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>特徴</h3>
+      <p>変動大</p>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>対応する課題カード</h3>
+      <p>Q09, Q12, Q18</p>
+    </section>
+  </div>
+  <div class="card mission-card">
+    <div class="card-topline">
+      <div class="card-header">
+        <span class="card-id">M09</span>
+        <span class="card-type">ミッションカード</span>
+      </div>
+      <span class="difficulty-badge level-advanced">上級</span>
+    </div>
+
+    <h2 class="card-title">高単価</h2>
+
+    <section class="card-section mission-goal">
+      <h3>ミッション</h3>
+      <p>CVR向上</p>
+    </section>
+
+    <section class="card-section card-note">
+      <h3>初期状態</h3>
+      <p>検討長の状況でスタートする。</p>
+    </section>
+
+    <section class="card-section">
+      <h3>KPI初期値</h3>
+      <div class="metrics-grid">
+        <span class="general">一般流入 5,500</span>
+        <span class="ad">広告流入 1,000</span>
+        <span>総流入 6,500</span>
+        <span>離脱率 0.56</span>
+        <span>回遊率 1.45</span>
+        <span>CVR 0.01</span>
+        <span>AOV 7,800円</span>
+        <span>CPC 45円</span>
+      </div>
+    </section>
+
+    <section class="card-section result-section">
+      <h3>参考計算値</h3>
+      <div class="metrics-grid">
+        <span>売上 323,466円</span>
+        <span>広告費 45,000円</span>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <h3>ミッション補正（倍率）</h3>
+      <div class="metrics-grid modifier-grid">
+        <span class="zero">一般流入 ×1</span>
+        <span class="changed">広告流入 ×0.9</span>
+        <span class="zero">離脱率 ×1</span>
+        <span class="zero">回遊率 ×1</span>
+        <span class="changed">CVR ×0.95</span>
+        <span class="changed">AOV ×1.025</span>
+        <span class="zero">CPC ×1</span>
+      </div>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>特徴</h3>
+      <p>検討長</p>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>対応する課題カード</h3>
+      <p>Q02, Q05, Q11, Q16, Q20</p>
+    </section>
+  </div>
+  <div class="card mission-card">
+    <div class="card-topline">
+      <div class="card-header">
+        <span class="card-id">M10</span>
+        <span class="card-type">ミッションカード</span>
+      </div>
+      <span class="difficulty-badge level-advanced">上級</span>
+    </div>
+
+    <h2 class="card-title">激戦区</h2>
+
+    <section class="card-section mission-goal">
+      <h3>ミッション</h3>
+      <p>差別化</p>
+    </section>
+
+    <section class="card-section card-note">
+      <h3>初期状態</h3>
+      <p>CPC高騰の状況でスタートする。</p>
+    </section>
+
+    <section class="card-section">
+      <h3>KPI初期値</h3>
+      <div class="metrics-grid">
+        <span class="general">一般流入 6,500</span>
+        <span class="ad">広告流入 3,500</span>
+        <span>総流入 10,000</span>
+        <span>離脱率 0.62</span>
+        <span>回遊率 1.4</span>
+        <span>CVR 0.01</span>
+        <span>AOV 3,600円</span>
+        <span>CPC 65円</span>
+      </div>
+    </section>
+
+    <section class="card-section result-section">
+      <h3>参考計算値</h3>
+      <div class="metrics-grid">
+        <span>売上 191,520円</span>
+        <span>広告費 227,500円</span>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <h3>ミッション補正（倍率）</h3>
+      <div class="metrics-grid modifier-grid">
+        <span class="zero">一般流入 ×1</span>
+        <span class="changed">広告流入 ×1.25</span>
+        <span class="zero">離脱率 ×1</span>
+        <span class="zero">回遊率 ×1</span>
+        <span class="zero">CVR ×1</span>
+        <span class="zero">AOV ×1</span>
+        <span class="changed">CPC ×0.8</span>
+      </div>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>特徴</h3>
+      <p>CPC高騰</p>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>対応する課題カード</h3>
+      <p>Q03, Q07, Q10, Q11, Q19</p>
+    </section>
+  </div>
+  <div class="card mission-card">
+    <div class="card-topline">
+      <div class="card-header">
+        <span class="card-id">M11</span>
+        <span class="card-type">ミッションカード</span>
+      </div>
+      <span class="difficulty-badge level-hardest">最難関</span>
+    </div>
+
+    <h2 class="card-title">大量販売</h2>
+
+    <section class="card-section mission-goal">
+      <h3>ミッション</h3>
+      <p>売上拡大</p>
+    </section>
+
+    <section class="card-section card-note">
+      <h3>初期状態</h3>
+      <p>薄利の状況でスタートする。</p>
+    </section>
+
+    <section class="card-section">
+      <h3>KPI初期値</h3>
+      <div class="metrics-grid">
+        <span class="general">一般流入 10,000</span>
+        <span class="ad">広告流入 4,000</span>
+        <span>総流入 14,000</span>
+        <span>離脱率 0.63</span>
+        <span>回遊率 1.35</span>
+        <span>CVR 0.009</span>
+        <span>AOV 3,000円</span>
+        <span>CPC 45円</span>
+      </div>
+    </section>
+
+    <section class="card-section result-section">
+      <h3>参考計算値</h3>
+      <div class="metrics-grid">
+        <span>売上 188,811円</span>
+        <span>広告費 180,000円</span>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <h3>ミッション補正（倍率）</h3>
+      <div class="metrics-grid modifier-grid">
+        <span class="changed">一般流入 ×1.2</span>
+        <span class="changed">広告流入 ×1.1</span>
+        <span class="zero">離脱率 ×1</span>
+        <span class="zero">回遊率 ×1</span>
+        <span class="zero">CVR ×1</span>
+        <span class="changed">AOV ×0.9</span>
+        <span class="zero">CPC ×1</span>
+      </div>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>特徴</h3>
+      <p>薄利</p>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>対応する課題カード</h3>
+      <p>Q02, Q05, Q10, Q11, Q13, Q16, Q19, Q20</p>
+    </section>
+  </div>
+  <div class="card mission-card">
+    <div class="card-topline">
+      <div class="card-header">
+        <span class="card-id">M12</span>
+        <span class="card-type">ミッションカード</span>
+      </div>
+      <span class="difficulty-badge level-basic">初級</span>
+    </div>
+
+    <h2 class="card-title">バランス型</h2>
+
+    <section class="card-section mission-goal">
+      <h3>ミッション</h3>
+      <p>安定成長</p>
+    </section>
+
+    <section class="card-section card-note">
+      <h3>初期状態</h3>
+      <p>なしの状況でスタートする。</p>
+    </section>
+
+    <section class="card-section">
+      <h3>KPI初期値</h3>
+      <div class="metrics-grid">
+        <span class="general">一般流入 8,000</span>
+        <span class="ad">広告流入 2,500</span>
+        <span>総流入 10,500</span>
+        <span>離脱率 0.57</span>
+        <span>回遊率 1.55</span>
+        <span>CVR 0.011</span>
+        <span>AOV 4,200円</span>
+        <span>CPC 50円</span>
+      </div>
+    </section>
+
+    <section class="card-section result-section">
+      <h3>参考計算値</h3>
+      <div class="metrics-grid">
+        <span>売上 323,319円</span>
+        <span>広告費 125,000円</span>
+      </div>
+    </section>
+
+    <section class="card-section">
+      <h3>ミッション補正（倍率）</h3>
+      <div class="metrics-grid modifier-grid">
+        <span class="changed">一般流入 ×1.05</span>
+        <span class="changed">広告流入 ×1.1</span>
+        <span class="changed">離脱率 ×1.05</span>
+        <span class="changed">回遊率 ×1.05</span>
+        <span class="changed">CVR ×1.05</span>
+        <span class="changed">AOV ×1.025</span>
+        <span class="changed">CPC ×1.05</span>
+      </div>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>特徴</h3>
+      <p>なし</p>
+    </section>
+
+    <section class="card-section compact-section">
+      <h3>対応する課題カード</h3>
+      <p>Q01, Q08, Q09, Q14, Q15</p>
+    </section>
+  </div>
+
+  </div>
+
+  <footer class="site-footer">
+    WEB ANALYTICS IMPROVEMENT GAME © KozyWorks
+  </footer>
+</body>
+</html>

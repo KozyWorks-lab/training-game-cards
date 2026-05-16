@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WEB ANALYTICS IMPROVEMENT GAME ファシリテーターガイド</title>
+<style>
+:root {
+  --bg: #f5f7fb;
+  --paper: #ffffff;
+  --text: #1f2937;
+  --muted: #64748b;
+  --line: #d8e0ea;
+  --blue: #0f4c81;
+  --blue2: #1e6aa8;
+  --light-blue: #eaf4ff;
+  --green: #eafaf1;
+  --green2: #15803d;
+  --orange: #fff7ed;
+  --orange2: #ea580c;
+  --red: #fff1f2;
+  --red2: #be123c;
+  --purple: #f5f3ff;
+  --purple2: #6d28d9;
+  --graybox: #f8fafc;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  line-height: 1.8;
+}
+.cover {
+  background: radial-gradient(circle at top left, #2d8fd0 0%, #0f4c81 45%, #06243d 100%);
+  color: #fff;
+  padding: 64px 24px 76px;
+  text-align: center;
+}
+.cover .eyebrow {
+  letter-spacing: .12em;
+  font-weight: 700;
+  font-size: 14px;
+  color: #dbeafe;
+}
+.cover h1 {
+  margin: 18px 0 10px;
+  font-size: clamp(30px, 5vw, 52px);
+  line-height: 1.25;
+}
+.cover .subtitle {
+  font-size: clamp(18px, 2.8vw, 28px);
+  font-weight: 700;
+}
+.cover .meta {
+  margin-top: 22px;
+  color: #dbeafe;
+  font-size: 14px;
+}
+.container {
+  max-width: 980px;
+  margin: -36px auto 56px;
+  padding: 0 20px;
+}
+.paper {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, .08);
+  overflow: hidden;
+}
+.section {
+  padding: 36px 40px;
+  border-bottom: 1px solid var(--line);
+}
+.section:last-child { border-bottom: none; }
+h2 {
+  margin: 0 0 18px;
+  color: var(--blue);
+  font-size: 26px;
+  line-height: 1.4;
+  border-left: 7px solid var(--blue2);
+  padding-left: 14px;
+}
+h3 {
+  margin: 22px 0 10px;
+  font-size: 18px;
+  color: #334155;
+}
+p { margin: 0 0 12px; }
+ul, ol { margin-top: 8px; padding-left: 1.35em; }
+li { margin: 4px 0; }
+strong { color: #0f172a; }
+.toc {
+  background: var(--light-blue);
+  border-bottom: 1px solid #bfdbfe;
+  padding: 28px 40px;
+}
+.toc h2 {
+  border: none;
+  padding: 0;
+  margin-bottom: 12px;
+  font-size: 22px;
+}
+.toc ol {
+  columns: 2;
+  column-gap: 36px;
+  margin-bottom: 0;
+}
+.toc a {
+  color: var(--blue);
+  text-decoration: none;
+  font-weight: 600;
+}
+.toc a:hover { text-decoration: underline; }
+.lead {
+  font-size: 18px;
+  font-weight: 700;
+  color: #334155;
+}
+.message {
+  background: #0f172a;
+  color: #fff;
+  border-radius: 18px;
+  padding: 22px 24px;
+  margin: 20px 0 0;
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+}
+.grid {
+  display: grid;
+  gap: 16px;
+}
+.grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 18px 20px;
+  background: var(--graybox);
+}
+.card h3 {
+  margin-top: 0;
+}
+.card.blue { background: var(--light-blue); border-color: #bfdbfe; }
+.card.green { background: var(--green); border-color: #bbf7d0; }
+.card.orange { background: var(--orange); border-color: #fed7aa; }
+.card.red { background: var(--red); border-color: #fecdd3; }
+.card.purple { background: var(--purple); border-color: #ddd6fe; }
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.badge.blue { background: #bfdbfe; color: #1e3a8a; }
+.badge.green { background: #bbf7d0; color: #166534; }
+.badge.orange { background: #fed7aa; color: #9a3412; }
+.badge.red { background: #fecdd3; color: #9f1239; }
+.badge.purple { background: #ddd6fe; color: #5b21b6; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0 8px;
+  overflow: hidden;
+  border-radius: 14px;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 11px 12px;
+  vertical-align: top;
+}
+th {
+  background: var(--light-blue);
+  color: var(--blue);
+  text-align: left;
+}
+.phase {
+  display: grid;
+  grid-template-columns: 90px 1fr 110px;
+  gap: 12px;
+  align-items: stretch;
+  margin: 12px 0;
+}
+.phase div {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.phase .num {
+  background: var(--blue);
+  color: #fff;
+  font-weight: 800;
+  text-align: center;
+}
+.phase .time {
+  background: var(--graybox);
+  color: var(--muted);
+  font-weight: 700;
+  text-align: center;
+}
+.callout {
+  border-radius: 18px;
+  padding: 18px 22px;
+  margin: 18px 0;
+  border: 1px solid var(--line);
+}
+.callout.ok { background: var(--green); border-color: #86efac; }
+.callout.warn { background: var(--orange); border-color: #fdba74; }
+.callout.ng { background: var(--red); border-color: #fda4af; }
+.callout.point { background: var(--light-blue); border-color: #93c5fd; }
+.callout h3 { margin-top: 0; }
+.checklist li {
+  list-style: none;
+  position: relative;
+  margin-left: 0;
+}
+.checklist li::before {
+  content: "□";
+  color: var(--blue);
+  font-weight: 800;
+  margin-right: 8px;
+}
+.footer {
+  text-align: center;
+  color: var(--muted);
+  padding: 30px 20px 42px;
+  font-size: 14px;
+}
+.print-note {
+  text-align: right;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 10px;
+}
+@media (max-width: 760px) {
+  .section, .toc { padding: 28px 22px; }
+  .toc ol { columns: 1; }
+  .grid.two, .grid.three { grid-template-columns: 1fr; }
+  .phase { grid-template-columns: 1fr; }
+}
+@media print {
+  body { background: #fff; }
+  .cover { padding: 36px 20px; page-break-after: always; }
+  .container { margin: 0; max-width: none; padding: 0; }
+  .paper { box-shadow: none; border: none; border-radius: 0; }
+  .section { page-break-inside: avoid; padding: 24px 0; }
+  .toc { padding: 20px 0; }
+  a { color: inherit; text-decoration: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="eyebrow">WEB ANALYTICS IMPROVEMENT GAME</div>
+  <h1>ファシリテーターガイド</h1>
+  <div class="subtitle">運営マニュアル｜配布用HTML版</div>
+  <div class="meta">2026.5.13｜制作：KozyWorks</div>
+</header>
+
+<main class="container">
+  <article class="paper">
+
+    <nav class="toc">
+      <h2>目次</h2>
+      <ol>
+        <li><a href="#purpose">このガイドの目的</a></li>
+        <li><a href="#essence">ゲームの本質</a></li>
+        <li><a href="#flow">全体進行</a></li>
+        <li><a href="#opening">導入のポイント</a></li>
+        <li><a href="#intervention">介入ルール</a></li>
+        <li><a href="#failure">よくある失敗パターン</a></li>
+        <li><a href="#learning">学習効果を最大化するコツ</a></li>
+        <li><a href="#ai">AI活用</a></li>
+        <li><a href="#difficulty">難易度調整</a></li>
+        <li><a href="#evaluation">評価方法</a></li>
+        <li><a href="#role">ファシリテーターの役割</a></li>
+        <li><a href="#client">クライアントワーク演出</a></li>
+        <li><a href="#trend">トレンド・3Cの出し方</a></li>
+        <li><a href="#fun">盛り上げ方</a></li>
+        <li><a href="#goal">最終ゴール</a></li>
+      </ol>
+      <div class="print-note">印刷する場合は、ブラウザの「印刷」からPDF保存できます。</div>
+    </nav>
+
+    <section id="purpose" class="section">
+      <h2>1. このガイドの目的</h2>
+      <p class="lead">本ガイドは、本ゲームを研修・講座で実施するためのファシリテーター向け運営マニュアルである。</p>
+      <p>受講者向けルールブックでは扱わない「進行」「介入」「設計意図」を明確にすることで、誰が実施しても一定の品質で運営できる状態を目指す。</p>
+    </section>
+
+    <section id="essence" class="section">
+      <h2>2. ゲームの本質（絶対に外さない軸）</h2>
+      <p>このゲームの目的は「勝つこと」ではない。</p>
+      <p>以下の思考体験を提供することが最優先である。</p>
+      <div class="grid three">
+        <div class="card blue"><span class="badge blue">意思決定</span><h3>不確実性下での意思決定</h3><p>限られた情報の中で判断する。</p></div>
+        <div class="card green"><span class="badge green">KPI</span><h3>KPIの構造理解</h3><p>施策と数値のつながりを理解する。</p></div>
+        <div class="card orange"><span class="badge orange">仮説検証</span><h3>仮説 → 検証</h3><p>選択理由を言語化し、結果から見直す。</p></div>
+      </div>
+      <ul>
+        <li>施策の因果関係の理解</li>
+        <li>外部環境の影響の認識</li>
+      </ul>
+      <div class="message">評価対象は「結果」ではなく「思考プロセス」である</div>
+    </section>
+
+    <section id="flow" class="section">
+      <h2>3. 全体進行（標準1プレイ：6ターン）</h2>
+      <p class="lead">本ゲームの標準進行は、「1プレイ（6ターン）」で約140〜150分を想定する。</p>
+      <p>ただし、参加者の経験値、チーム数、AI比較の深さ、振り返り時間、ファシリテーターの介入量により時間は変動する。初回実施では、150分前後で設計することを推奨する。</p>
+
+      <h3>標準所要時間</h3>
+      <div class="callout point">
+        <p><strong>標準：</strong>1プレイ（6ターン）で約140〜150分</p>
+        <p><strong>推奨：</strong>初回実施では150分前後で設計する</p>
+      </div>
+
+      <h3>全体構成（標準150分）</h3>
+      <div class="phase"><div class="num">1</div><div><strong>ゲーム説明・前提共有</strong><br>ゲームの目的、前提条件、基本ルールを共有する。</div><div class="time">10分</div></div>
+      <div class="phase"><div class="num">0</div><div><strong>ターン0</strong><br>初期設定・戦略確認を行う。</div><div class="time">5分</div></div>
+      <div class="phase"><div class="num">1〜6</div><div><strong>ターン1〜6</strong><br>各ターン20分で、結果確認、市場・3C確認、施策検討を行う。</div><div class="time">120分</div></div>
+      <div class="phase"><div class="num">総括</div><div><strong>総合結果発表・総括</strong><br>グループごとの結果を発表し、意思決定プロセスを振り返る。</div><div class="time">15分</div></div>
+
+      <table>
+        <thead><tr><th>内容</th><th>時間</th></tr></thead>
+        <tbody>
+          <tr><td>ゲーム説明・前提共有</td><td>10分</td></tr>
+          <tr><td>ターン0（初期設定・戦略確認）</td><td>5分</td></tr>
+          <tr><td>ターン1〜6</td><td>120分</td></tr>
+          <tr><td>総合結果発表・総括</td><td>15分</td></tr>
+          <tr><td><strong>合計</strong></td><td><strong>150分</strong></td></tr>
+        </tbody>
+      </table>
+
+      <h3>各ターンの標準進行（20分）</h3>
+      <table>
+        <thead><tr><th>内容</th><th>時間</th></tr></thead>
+        <tbody>
+          <tr><td>前回結果の確認・振り返り</td><td>5分</td></tr>
+          <tr><td>市場・3Cの確認</td><td>5分</td></tr>
+          <tr><td>施策検討（候補4つ → 2つへ絞り込み）</td><td>10分</td></tr>
+          <tr><td><strong>合計</strong></td><td><strong>20分</strong></td></tr>
+        </tbody>
+      </table>
+
+      <h3>ターン内で行うこと</h3>
+      <div class="grid three">
+        <div class="card blue">
+          <span class="badge blue">5分</span>
+          <h3>① 前回結果の確認・振り返り</h3>
+          <ul>
+            <li>KPI変化の確認</li>
+            <li>売上・広告費・利益構造の確認</li>
+            <li>想定との差分確認</li>
+            <li>問題点の言語化</li>
+          </ul>
+          <p><strong>重要：</strong>「なぜそうなったか」を説明させる。</p>
+        </div>
+        <div class="card purple">
+          <span class="badge purple">5分</span>
+          <h3>② 市場・3Cの確認</h3>
+          <ul>
+            <li>トレンドカード確認</li>
+            <li>3Cカード確認</li>
+            <li>外部環境変化の確認</li>
+            <li>制約条件の確認</li>
+          </ul>
+          <p><strong>重要：</strong>「前回と何が変わったか」を意識させる。</p>
+        </div>
+        <div class="card green">
+          <span class="badge green">10分</span>
+          <h3>③ 施策検討</h3>
+          <ul>
+            <li>候補施策を4つ程度出す</li>
+            <li>KPI影響を議論する</li>
+            <li>優先順位を決める</li>
+            <li>最終的に2施策へ絞り込む</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout point">
+        <h3>AI利用時の議論対象</h3>
+        <ul>
+          <li>AIへ何を渡すか</li>
+          <li>AI提案をどう解釈するか</li>
+          <li>Humanとの差分は何か</li>
+        </ul>
+      </div>
+
+      <h3>2プレイ実施時について</h3>
+      <p>2プレイを実施する場合でも、単純に所要時間が2倍になるわけではない。</p>
+      <p>2回目は、ルール理解、KPI構造理解、思考整理が進んでいるため、ターンごとの検討時間を短縮しやすい。</p>
+      <div class="callout warn">
+        <p>ただし、AI比較、振り返り、意思決定理由の言語化を重視する場合は、十分な時間を確保することを推奨する。</p>
+      </div>
+    </section>
+
+    <section id="opening" class="section">
+      <h2>4. 導入のポイント</h2>
+      <p>伝えるべきは3つだけ。</p>
+      <div class="grid three">
+        <div class="card blue"><h3>正解は1つではない</h3><p>状況により、複数の判断がありうる。</p></div>
+        <div class="card orange"><h3>施策は万能ではない</h3><p>必ず副作用がある。</p></div>
+        <div class="card purple"><h3>外部環境で結果は変わる</h3><p>同じ判断でも、トレンドや3Cで結果が変化する。</p></div>
+      </div>
+      <div class="callout warn">
+        <h3>注意</h3>
+        <ul>
+          <li>ルール説明をしすぎない</li>
+          <li>KPIの計算は必要最低限に留める</li>
+          <li>考えさせる余白を残す</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="intervention" class="section">
+      <h2>5. プレイ中の介入ルール</h2>
+      <table>
+        <thead><tr><th>レベル</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Lv1</strong></td><td>事実確認（KPIの見方など）</td></tr>
+          <tr><td><strong>Lv2</strong></td><td>視点の提示（抜け漏れの指摘）</td></tr>
+          <tr><td><strong>Lv3</strong></td><td>思考の深掘り（理由の追及）</td></tr>
+        </tbody>
+      </table>
+      <div class="callout point">
+        <p><strong>原則：Lv2まで。</strong>Lv3は必要時のみ。</p>
+      </div>
+      <div class="grid two">
+        <div class="callout ok">
+          <h3>やっていいこと</h3>
+          <ul>
+            <li>KPIの見方をヒントとして出す</li>
+            <li>視点のズレを指摘する</li>
+            <li>思考を深掘りする質問をする</li>
+          </ul>
+          <p><strong>例：</strong>「その施策はどのKPIに効きますか？」</p>
+          <p><strong>例：</strong>「その流入は一般流入ですか？広告流入ですか？」</p>
+          <p><strong>例：</strong>「なぜそれを優先しましたか？」</p>
+          <p><strong>例：</strong>「他に選択肢はありましたか？」</p>
+        </div>
+        <div class="callout ng">
+          <h3>やってはいけないこと</h3>
+          <ul>
+            <li>正解を教える</li>
+            <li>最適解を誘導する</li>
+            <li>判断を代替する</li>
+          </ul>
+          <p><strong>“考えさせる”ことが仕事。ファシリテーターは“解答者”ではない。</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="failure" class="section">
+      <h2>6. よくある失敗パターン</h2>
+      <div class="grid two">
+        <div class="card red"><span class="badge red">①</span><h3>施策から考える</h3><p>課題設定が弱い。</p></div>
+        <div class="card red"><span class="badge red">②</span><h3>流入ばかり追う</h3><p>CVR・AOVが無視される。</p></div>
+        <div class="card red"><span class="badge red">③</span><h3>単発思考</h3><p>ターン構造が活かせない。</p></div>
+        <div class="card red"><span class="badge red">④</span><h3>KPIの分断理解</h3><p>因果関係が理解できていない。</p></div>
+        <div class="card red"><span class="badge red">⑤</span><h3>広告流入と一般流入を混同する</h3><p>広告費構造を誤認する。</p></div>
+      </div>
+    </section>
+
+    <section id="learning" class="section">
+      <h2>7. 学習効果を最大化するコツ</h2>
+      <div class="grid three">
+        <div class="card orange">
+          <span class="badge orange">1回目プレイ</span>
+          <h3>失敗体験</h3>
+          <ul>
+            <li>思いつきで選ばせる</li>
+            <li>深く介入しない</li>
+            <li>結果のズレを体験させる</li>
+          </ul>
+        </div>
+        <div class="card blue">
+          <span class="badge blue">振り返り</span>
+          <h3>構造理解</h3>
+          <ul>
+            <li>KPIの因果関係を整理</li>
+            <li>なぜ失敗したか言語化</li>
+            <li>他チームと比較</li>
+          </ul>
+        </div>
+        <div class="card green">
+          <span class="badge green">2回目プレイ</span>
+          <h3>改善思考</h3>
+          <ul>
+            <li>仮説を持たせる</li>
+            <li>優先順位を意識させる</li>
+            <li>一貫性を持たせる</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="ai" class="section">
+      <h2>8. AI活用</h2>
+      <p>AIオペレーターの役割は、AIへ答えを求めることではない。</p>
+      <div class="grid three">
+        <div class="card blue"><h3>情報設計</h3><p>どの情報をAIへ渡すか。</p></div>
+        <div class="card green"><h3>問いの設計</h3><p>どのように問いを立てるか。</p></div>
+        <div class="card orange"><h3>解釈</h3><p>AI提案をどう解釈するか。</p></div>
+      </div>
+      <p>ファシリテーターは、AIの回答精度だけを評価してはいけない。</p>
+      <ul>
+        <li>Human側とAI側で何が違ったか</li>
+        <li>なぜ異なる判断になったか</li>
+        <li>AIへ渡す情報は適切だったか</li>
+      </ul>
+      <p>本ゲームにおけるAIは、「正解を出すツール」ではない。重要なのは、AIと人間の意思決定の違いを理解することである。そのため、AIの提案理由を説明させることを重視する。</p>
+      <div class="callout warn">
+        <h3>注意</h3>
+        <p>KPI補正値や内部計算ロジックなど、ゲーム内部の答えに近い情報をAIへ与えすぎると、AIは単なる計算機になってしまう。</p>
+        <p>本ゲームでは、現在のKPI、現在の戦略、候補施策を中心にAIへ渡し、AI自身に施策の意味や影響を推測させる。</p>
+        <p><strong>「AIへ何を伝えるべきか」も、本ゲームの重要な学習対象である。</strong></p>
+      </div>
+    </section>
+
+    <section id="difficulty" class="section">
+      <h2>9. 難易度調整</h2>
+      <table>
+        <thead><tr><th>対象</th><th>調整方法</th></tr></thead>
+        <tbody>
+          <tr><td><strong>初級</strong></td><td>KPIを限定する。カード数を減らす。ターン数を短縮する。</td></tr>
+          <tr><td><strong>上級</strong></td><td>制約条件を追加する。意思決定時間を短縮する。トレンドを強めに設定する。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="evaluation" class="section">
+      <h2>10. 評価方法</h2>
+      <div class="grid two">
+        <div class="card green"><h3>KPI改善度</h3><p>数値の改善を見る。</p></div>
+        <div class="card blue"><h3>戦略の一貫性</h3><p>課題、施策、結果がつながっているかを見る。</p></div>
+        <div class="card purple"><h3>意思決定の説明力</h3><p>なぜその選択をしたか説明できるかを見る。</p></div>
+        <div class="card orange"><h3>1回目→2回目の改善度</h3><p>振り返りを踏まえて判断が改善されたかを見る。</p></div>
+      </div>
+    </section>
+
+    <section id="role" class="section">
+      <h2>11. ファシリテーターの役割</h2>
+      <div class="message">教える人ではない。正解を持つ人でもない。思考を引き出す人である。</div>
+    </section>
+
+    <section id="client" class="section">
+      <h2>12. クライアントワーク演出</h2>
+      <p>リアリティを高めるために以下を導入する。</p>
+      <div class="grid two">
+        <div class="card orange"><h3>導入する演出</h3><ul><li>クライアント役を設定</li><li>途中で制約条件を追加</li><li>方針変更の指示を出す</li></ul></div>
+        <div class="card blue"><h3>例</h3><ul><li>広告費は増やせない</li><li>短期成果を求める</li><li>ブランド毀損は避けたい</li></ul></div>
+      </div>
+    </section>
+
+    <section id="trend" class="section">
+      <h2>13. トレンド・3Cの出し方</h2>
+      <div class="grid two">
+        <div class="card blue"><h3>出し方</h3><ul><li>ランダム or 指定</li><li>意図的に難しくする</li><li>偏らせる</li></ul></div>
+        <div class="card purple"><h3>設計意図</h3><ul><li>環境変化への適応力を試す</li><li>正解を揺らす</li></ul></div>
+      </div>
+    </section>
+
+    <section id="fun" class="section">
+      <h2>14. 盛り上げ方</h2>
+      <div class="grid three">
+        <div class="card green"><h3>チーム対抗形式</h3><p>チームごとの判断の違いを見せる。</p></div>
+        <div class="card blue"><h3>KPIランキング</h3><p>結果の違いを可視化する。</p></div>
+        <div class="card purple"><h3>HumanとAIの戦略差分</h3><p>人間とAIの判断の違いを比較する。</p></div>
+        <div class="card orange"><h3>最優秀戦略賞</h3><p>数値だけでなく説明力も評価する。</p></div>
+        <div class="card green"><h3>改善ストーリー発表</h3><p>なぜ改善したかを発表させる。</p></div>
+      </div>
+    </section>
+
+    <section id="goal" class="section">
+      <h2>15. 最終ゴール</h2>
+      <p>本ゲームのゴールは以下である。</p>
+      <div class="message">「施策を選べる人」ではなく、「意思決定できる人」を育てること。</div>
+      <p>さらに、AIを活用しながら考える、AI提案を評価する、AIへ適切に問いを立てることができる人材を育成することを目的としている。</p>
+
+      <div class="callout point">
+        <h3>本ゲームに正解はありません</h3>
+        <p>同じ状況でも、どの課題を重視するか、どのKPIを優先するか、AIへ何を伝えるかによって、異なる戦略と結果が生まれる。</p>
+        <p>重要なのは、「なぜその判断を行ったのか」を説明できることである。</p>
+        <p>ファシリテーターは、結果だけではなく、意思決定プロセスそのものを観察し、受講者の思考を引き出すことを重視する。</p>
+      </div>
+
+      <div class="message">本ゲームは、AI時代における「改善意思決定訓練」を目的としている。</div>
+      
+      <section class="section">
+  <h2>GM用補助資料</h2>
+
+  <p>
+    ファシリテーター向けに、
+    ゲーム運営で使用するGM用カードを公開しています。
+  </p>
+
+  <div class="grid two">
+
+<div class="card blue">
+  <h3>トレンドカード一覧</h3>
+  <p>
+    市場変化・外部環境変化を管理するためのGM用カード。
+  </p>
+
+  <p>
+    <a href="https://kozyworks.jp/cards/gm/trend.html" target="_blank">
+      ▶ トレンドカードを見る
+    </a>
+  </p>
+</div>
+
+<div class="card purple">
+  <h3>3Cカード一覧</h3>
+  <p>
+    Customer / Competitor / Company を管理するためのGM用カード。
+  </p>
+
+  <p>
+    <a href="https://kozyworks.jp/cards/gm/3c.html" target="_blank">
+      ▶ 3Cカードを見る
+    </a>
+  </p>
+</div>
+
+  </div>
+</section>
+      
+    </section>
+
+    <footer class="footer">
+      WEB ANALYTICS IMPROVEMENT GAME<br>
+      © KozyWorks
+    </footer>
+
+  </article>
+</main>
+
+</body>
+</html>
