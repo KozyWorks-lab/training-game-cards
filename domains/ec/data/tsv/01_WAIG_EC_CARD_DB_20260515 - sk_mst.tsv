@@ -1,0 +1,11 @@
+id	name	label	category	target	general_inflow	ad_inflow	bounce	browse	cvr	aov	cpc	activation
+S01	広告運用研修	S01｜広告運用研修	広告	strength	1	1.05	1	1	1	1	1	2
+S02	UX改善研修	S02｜UX改善研修	UX	strength	1	1	1	1	1.1	1	1	3
+S03	コンテンツ戦略研修	S03｜コンテンツ戦略研修	コンテンツ	strength	1	1	1	1.15	1	1	1	5
+S04	商品設計研修	S04｜商品設計研修	商品	strength	1	1	1	1	1	1.075	1	5
+S05	CRM戦略研修	S05｜CRM戦略研修	CRM	strength	1.15	1	1	1	1	1	1	5
+S06	広告改善研修	S06｜広告改善研修	広告	weakness	1	1	1	1	1	1	0.95	2
+S07	UX基礎研修	S07｜UX基礎研修	UX	weakness	1	1	0.95	1	1	1	1	3
+S08	コンテンツ基礎研修	S08｜コンテンツ基礎研修	コンテンツ	weakness	1	1	1	1.1	1	1	1	5
+S09	商品改善研修	S09｜商品改善研修	商品	weakness	1	1	1	1	1	1.05	1	5
+S10	CRM基礎研修	S10｜CRM基礎研修	CRM	weakness	1	1	1	1	1.1	1	1	3
