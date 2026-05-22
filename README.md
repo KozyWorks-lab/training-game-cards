@@ -1,7 +1,7 @@
 # WEB ANALYTICS IMPROVEMENT GAME  
 ## AI比較・活用型 実践シミュレーション
 
-![WAIG Compare Sheet](./domains/ec/assets/images/compare_sheet.png)
+![WAIG Compare Sheet](./domains/ec/assets/images/waig_v2_compare_sheet.png)
 
 > 「施策を知っている」から、  
 > 「意思決定できる」へ。
