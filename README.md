@@ -372,9 +372,10 @@ v2.0.0 は v1 テンプレートと互換性がありません。
 
 参照：
 
-- /release/v2_0_0/
-- /release/v2_0_0/google_drive_template.md
-- CHANGELOG.md
+- [Google Drive Templates](./release/v2_0_0/google_drive_template.md)
+- [Migration Guide](./release/v2_0_0/migration_guide.md)
+- [CHANGELOG](./CHANGELOG.md)
+
 
 ---
 
