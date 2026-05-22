@@ -349,6 +349,35 @@ Decision Training & Web Analytics Learning Project
 
 ---
 
+# 最新リリース
+
+## Current Stable Release
+
+- v2.0.0
+
+このバージョンでは、
+
+- スプレッドシート構造
+- KPI計算ロジック
+- compare_db
+- AI比較ワークフロー
+
+を大幅に更新しています。
+
+## 重要
+
+v2.0.0 は v1 テンプレートと互換性がありません。
+
+最新テンプレートを使用してください。
+
+参照：
+
+- /release/v2_0_0/
+- /release/v2_0_0/google_drive_template.md
+- CHANGELOG.md
+
+---
+
 # メッセージ
 
 知識だけでは、意思決定はできません。
