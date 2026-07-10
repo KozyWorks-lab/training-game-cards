@@ -1,0 +1,197 @@
+<script>
+const groupDisplayNameMap = {};
+const groupMissionInfoMap = {};
+
+/**
+ * @summary クライアント共通処理：グループIDから表示名を取得する
+ * @function getGroupLabel
+ * @read groupId, groupDisplayNameMap
+ * @write 表示名、またはグループIDを返す
+ * @update 2026-06-30
+ */
+function getGroupLabel(groupId) {
+  if (typeof groupDisplayNameMap === 'undefined') {
+    return groupId;
+  }
+
+  const displayName = groupDisplayNameMap[groupId];
+
+  if (!displayName) {
+    return groupId;
+  }
+
+  return displayName;
+}
+
+/**
+ * @summary クライアント共通処理：グループIDに対応する表示名を保持する
+ * @function setGroupDisplayName
+ * @read groupId, displayName
+ * @write groupDisplayNameMap に表示名を設定する
+ * @update 2026-06-30
+ */
+function setGroupDisplayName(groupId, displayName) {
+  if (!groupId) return;
+  groupDisplayNameMap[groupId] = displayName || groupId;
+}
+
+/**
+ * @summary クライアント共通処理：グループIDに対応する課題・ミッション・スキル情報を保持する
+ * @function setGroupMissionInfo
+ * @read groupId, info
+ * @write groupMissionInfoMap にミッション関連情報を設定する
+ * @update 2026-06-30
+ */
+function setGroupMissionInfo(groupId, info) {
+  if (!groupId) return;
+  groupMissionInfoMap[groupId] = info || {};
+}
+
+/**
+ * @summary クライアント共通処理：グループIDに対応する課題・ミッション・スキル情報を取得する
+ * @function getGroupMissionInfo
+ * @read groupId, groupMissionInfoMap
+ * @write ミッション関連情報オブジェクトを返す
+ * @update 2026-06-30
+ */
+function getGroupMissionInfo(groupId) {
+  return groupMissionInfoMap[groupId] || {};
+}
+
+/**
+ * @summary クライアント共通処理：指定グループの課題・ミッション・スキル情報をHTMLとして描画する
+ * @function renderMissionInfoForGroup
+ * @read groupId, getGroupMissionInfo(), buildCaseMissionHtml()
+ * @write mission-info 用のHTML文字列、または空文字を返す
+ * @update 2026-06-30
+ */
+function renderMissionInfoForGroup(groupId) {
+  const mission = getGroupMissionInfo(groupId);
+
+  if (
+    !mission.challengeId &&
+    !mission.challengeName &&
+    !mission.missionId &&
+    !mission.missionName &&
+    !mission.missionDifficulty &&
+    !mission.skillId &&
+    !mission.skillName &&
+    !mission.skillActivation
+  ) {
+    return '';
+  }
+
+  return '<div class="mission-info">' +
+    buildCaseMissionHtml(mission) +
+    '</div>';
+}
+
+/**
+ * @summary クライアント共通処理：数値をカンマ区切りで整形する
+ * @function formatNumber
+ * @read value
+ * @write カンマ区切りの数値文字列を返す
+ * @update 2026-06-30
+ */
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString();
+}
+
+/**
+ * @summary クライアント共通処理：数値を指定桁数の小数表記に整形する
+ * @function formatRate
+ * @read value, digit
+ * @write 指定桁数の小数文字列を返す
+ * @update 2026-06-30
+ */
+function formatRate(value, digit) {
+  return Number(value || 0).toFixed(digit);
+}
+
+/**
+ * @summary クライアント共通処理：小数値をパーセント表記に整形する
+ * @function formatPercent
+ * @read value, digit
+ * @write 指定桁数のパーセント文字列を返す
+ * @update 2026-06-30
+ */
+function formatPercent(value, digit) {
+  return (Number(value || 0) * 100).toFixed(digit) + '%';
+}
+
+/**
+ * @summary クライアント共通処理：数値を円表記に整形する
+ * @function formatCurrency
+ * @read value
+ * @write ¥付きカンマ区切りの金額文字列を返す
+ * @update 2026-06-30
+ */
+function formatCurrency(value) {
+  return '¥' + Number(value || 0).toLocaleString();
+}
+
+/**
+ * @summary クライアント共通処理：HTML表示用に特殊文字をエスケープする
+ * @function escapeHtml
+ * @read text
+ * @write HTMLエスケープ済み文字列を返す
+ * @update 2026-06-30
+ */
+function escapeHtml(text) {
+  return String(text === null || text === undefined ? '' : text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
+ * @summary クライアント共通処理：課題・ミッション・スキル情報を表示用HTMLに整形する
+ * @function buildCaseMissionHtml
+ * @read info, escapeHtml()
+ * @write 課題・ミッション・スキルのHTML文字列を返す
+ * @update 2026-06-30
+ */
+function buildCaseMissionHtml(info) {
+  info = info || {};
+
+  const challengeId = info.challengeId || '';
+  const challengeName = info.challengeName || '';
+
+  const missionId = info.missionId || '';
+  const missionName = info.missionName || '';
+  const missionDifficulty = info.missionDifficulty || '';
+
+  const skillId = info.skillId || '';
+  const skillName = info.skillName || '';
+  const skillActivation = info.skillActivation || '';
+
+  let html = '';
+
+  if (challengeId || challengeName) {
+    html += '<div class="case-mission-line">' +
+      escapeHtml(challengeId || '-') +
+      (challengeName ? '｜' + escapeHtml(challengeName) : '') +
+      '</div>';
+  }
+
+  if (missionId || missionName || missionDifficulty) {
+    html += '<div class="case-mission-line">' +
+      escapeHtml(missionId || '-') +
+      (missionName ? '｜' + escapeHtml(missionName) : '') +
+      (missionDifficulty ? '｜' + escapeHtml(missionDifficulty) : '') +
+      '</div>';
+  }
+
+  if (skillId || skillName || skillActivation) {
+    html += '<div class="case-mission-line">' +
+      escapeHtml(skillId || '-') +
+      (skillName ? '｜' + escapeHtml(skillName) : '') +
+      (skillActivation ? '｜Turn' + escapeHtml(skillActivation) + '発動' : '') +
+      '</div>';
+  }
+
+  return html;
+}
+</script>

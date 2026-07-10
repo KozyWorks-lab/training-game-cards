@@ -1,0 +1,381 @@
+  <h1>全体成績</h1>
+
+  <section class="card">
+    <h2>ターンを選択</h2>
+    <p>
+      確認したいターンを選ぶと、利益成長率ランキングを表示します。
+    </p>
+    <div id="overall-turn-buttons" class="turn-button-grid">ターンを読み込み中...</div>
+  </section>
+
+  <section class="card">
+    <h2 id="overall-ranking-title">利益成長率ランキング</h2>
+    <p id="overall-ranking-note">
+      主な評価指標は、Turn0の利益を基準にした「利益成長率」です。<br>
+      初期利益が小さい場合は成長率が大きく表示されるため、最終利益・売上・ROASも合わせて確認してください。
+    </p>
+    <div id="overall-result-list">結果を読み込み中...</div>
+  </section>
+
+  <div class="hakase-box">
+    <img
+      id="overall-hakase-image"
+      src="https://drive.google.com/thumbnail?id=1nM8JFgEDUixB1tORdoIoc1NcjQxAdQCG&sz=w400"
+      class="hakase-avatar"
+      alt="WAIG博士">
+
+    <div class="hakase-comment-area">
+      <h3>WAIG博士</h3>
+      <div id="overall-hakase-comment">
+        全体の順位を確認しましょう。利益成長率に注目です。
+      </div>
+    </div>
+  </div>
+
+<script>
+
+/**
+ * @summary 全体成績画面処理：ランキング表のプレイヤーセルHTMLを生成する
+ * @function renderPlayerCellHtml
+ * @read row, getGroupLabel(), getGroupMissionInfo(), buildCaseMissionHtml(), escapeHtml()
+ * @write プレイヤー名と課題・ミッション情報を含むHTML文字列を返す
+ * @update 2026-06-30
+ */
+function renderPlayerCellHtml(row) {
+  const groupId = row.groupId || '';
+  const playerName =
+    row.groupLabel ||
+    getGroupLabel(groupId);
+
+  const mission = getGroupMissionInfo(groupId);
+
+  let html = '';
+
+  html += '<div class="ranking-player-name">' +
+    escapeHtml(playerName) +
+    '</div>';
+
+  if (
+    mission.challengeId ||
+    mission.challengeName ||
+    mission.missionId ||
+    mission.missionName ||
+    mission.missionDifficulty
+  ) {
+    html += '<div class="ranking-mission-info">';
+    html += buildCaseMissionHtml(mission);
+    html += '</div>';
+  }
+
+  return html;
+}
+
+/**
+ * @summary 全体成績画面処理：WAIG博士コメントを更新する
+ * @function updateOverallHakaseComment
+ * @read message, overall-hakase-comment要素
+ * @write overall-hakase-comment 要素のtextContentを更新する
+ * @update 2026-06-30
+ */
+function updateOverallHakaseComment(message) {
+  const comment = document.getElementById('overall-hakase-comment');
+  if (comment) {
+    comment.textContent = message;
+  }
+}
+
+/**
+ * @summary 全体成績画面の初期表示時に、プレイヤー表示名とミッション情報を取得する
+ * @function loadInitialData
+ * @read google.script.run.getPlayerGroupList(), buildGroupDisplayNameMap(), loadTurnButtons()
+ * @write プレイヤー表示名・ミッション情報Mapを作成し、ターンボタン読み込みを開始する
+ * @update 2026-06-30
+ */
+function loadInitialData() {
+  google.script.run
+    .withSuccessHandler(function(groups) {
+      buildGroupDisplayNameMap(groups || []);
+      loadTurnButtons();
+    })
+    .withFailureHandler(function(error) {
+      updateOverallHakaseComment(
+        'プレイヤー名の取得に失敗しました。プレイヤー枠IDで表示します。'
+      );
+      loadTurnButtons();
+    })
+    .getPlayerGroupList();
+}
+
+/**
+ * @summary 全体成績画面処理：プレイヤー表示名と課題・ミッション・スキル情報のMapを作成する
+ * @function buildGroupDisplayNameMap
+ * @read groups, setGroupDisplayName(), setGroupMissionInfo()
+ * @write groupDisplayNameMap と groupMissionInfoMap を更新する
+ * @update 2026-06-30
+ */
+function buildGroupDisplayNameMap(groups) {
+  groups.forEach(function(group) {
+    setGroupDisplayName(
+      group.groupId,
+      group.displayName || group.groupId
+    );
+
+    setGroupMissionInfo(group.groupId, {
+      challengeId: group.challengeId || '',
+      challengeName: group.challengeName || '',
+      missionId: group.missionId || '',
+      missionName: group.missionName || '',
+      missionDifficulty: group.missionDifficulty || '',
+      skillId: group.skillId || '',
+      skillName: group.skillName || '',
+      skillActivation: group.skillActivation || ''
+    });
+  });
+}
+
+/**
+ * @summary 全体成績画面から参照し、表示可能な結果ターン一覧を取得する
+ * @function loadTurnButtons
+ * @read google.script.run.getAvailableResultTurns(), renderTurnButtons()
+ * @write overall-turn-buttons 要素にターン取得エラーまたはターンボタンを表示する
+ * @update 2026-06-30
+ */
+function loadTurnButtons() {
+  google.script.run
+    .withSuccessHandler(renderTurnButtons)
+    .withFailureHandler(function(error) {
+      document.getElementById('overall-turn-buttons').innerHTML =
+        '<p style="color:red;">ターン情報の取得に失敗しました。</p><pre>' +
+        escapeHtml(error.message || error) +
+        '</pre>';
+    })
+    .getAvailableResultTurns();
+}
+
+/**
+ * @summary 全体成績画面処理：表示可能なターンボタンを描画し、最新ターンのランキングを読み込む
+ * @function renderTurnButtons
+ * @read turns, loadRanking(), updateOverallHakaseComment()
+ * @write overall-turn-buttons と overall-result-list の表示を更新する
+ * @update 2026-06-30
+ */
+function renderTurnButtons(turns) {
+  const container = document.getElementById('overall-turn-buttons');
+  container.innerHTML = '';
+
+  if (!turns || turns.length === 0) {
+    container.innerHTML =
+      '<p>表示できるターンがありません。</p>';
+    document.getElementById('overall-result-list').innerHTML =
+      '<p>ターン終了後に全体成績が表示されます。</p>';
+    updateOverallHakaseComment('まだ結果データがありませんな。');
+    return;
+  }
+
+  turns.forEach(function(item) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Turn ' + item.turn;
+    button.onclick = function() {
+      loadRanking(item.turn);
+    };
+
+    container.appendChild(button);
+  });
+
+  loadRanking(turns[turns.length - 1].turn);
+}
+
+/**
+ * @summary 全体成績画面から参照し、指定ターンの利益成長率ランキングを取得する
+ * @function loadRanking
+ * @read turn, google.script.run.getTurnRanking(), renderRanking(), showLoading(), hideLoading()
+ * @write overall-result-list にランキング取得エラー、またはランキング表を表示する
+ * @update 2026-06-30
+ */
+function loadRanking(turn) {
+  showLoading();
+
+  google.script.run
+    .withSuccessHandler(function(results) {
+      hideLoading();
+      renderRanking(turn, results || []);
+    })
+    .withFailureHandler(function(error) {
+      hideLoading();
+
+      document.getElementById('overall-result-list').innerHTML =
+        '<p style="color:red;">ランキングの取得に失敗しました。</p><pre>' +
+        escapeHtml(error.message || error) +
+        '</pre>';
+    })
+    .getTurnRanking(turn);
+}
+
+/**
+ * @summary 全体成績画面処理：指定ターンの利益成長率ランキング表を描画する
+ * @function renderRanking
+ * @read turn, results, renderPlayerCellHtml(), formatPercent(), getRankingHakaseComment()
+ * @write overall-ranking-title、overall-result-list、overall-hakase-comment の表示を更新する
+ * @update 2026-06-30
+ */
+function renderRanking(turn, results) {
+  document.getElementById('overall-ranking-title').textContent =
+    'Turn ' + turn + ' 利益成長率ランキング';
+
+  if (!results || results.length === 0) {
+    document.getElementById('overall-result-list').innerHTML =
+      '<p>ランキングデータがありません。</p>';
+    updateOverallHakaseComment('まだ結果データがありませんな。');
+    return;
+  }
+
+  const maxGrowthRate = Math.max.apply(null, results.map(function(row) {
+    return Number(row.growthRate || 0);
+  }));
+
+  const maxProfit = Math.max.apply(null, results.map(function(row) {
+    return Number(row.profit || 0);
+  }));
+
+  const maxRoas = Math.max.apply(null, results.map(function(row) {
+    return Number(row.roas || 0);
+  }));
+
+  let html = '<table>';
+  html += '<tr>';
+  html += '<th>順位</th>';
+  html += '<th>プレイヤー</th>';
+  html += '<th>利益成長率</th>';
+  html += '<th>利益</th>';
+  html += '<th>売上</th>';
+  html += '<th>ROAS</th>';
+  html += '<th>CPA</th>';
+  html += '<th>CV数</th>';
+  html += '</tr>';
+
+  results.forEach(function(row, index) {
+    const playerName =
+      row.groupLabel ||
+      getGroupLabel(row.groupId);
+
+    const growthRate = Number(row.growthRate || 0);
+    const profit = Number(row.profit || 0);
+    const roas = Number(row.roas || 0);
+
+    html += '<tr>';
+
+    html += '<td>' + (index + 1) + '</td>';
+
+    html += '<td class="ranking-player-cell">' +
+      renderPlayerCellHtml(row) +
+      '</td>';
+
+    html += '<td class="' +
+      (growthRate === maxGrowthRate ? 'best-profit' : '') +
+      '">' +
+      formatPercent(growthRate, 2) +
+      '</td>';
+
+    html += '<td class="' +
+      (profit === maxProfit ? 'best-profit' : '') +
+      '">' +
+      profit.toLocaleString() +
+      '</td>';
+
+    html += '<td>' +
+      Number(row.sales || 0).toLocaleString() +
+      '</td>';
+
+    html += '<td class="' +
+      (roas === maxRoas ? 'best-roas' : '') +
+      '">' +
+      escapeHtml(row.roas || '') +
+      '</td>';
+
+    html += '<td>' +
+      Number(row.cpa || 0).toLocaleString() +
+      '</td>';
+
+    html += '<td>' +
+      Number(row.cvCount || 0).toLocaleString() +
+      '</td>';
+
+    html += '</tr>';
+  });
+
+  html += '</table>';
+
+  document.getElementById('overall-result-list').innerHTML = html;
+  updateOverallHakaseComment(getRankingHakaseComment(results));
+}
+
+/**
+ * @summary 全体成績画面処理：ランキング結果からWAIG博士コメントを生成する
+ * @function getRankingHakaseComment
+ * @read results, getGroupLabel(), formatPercent()
+ * @write トッププレイヤーと2位との差を含むコメント文字列を返す
+ * @update 2026-06-30
+ */
+function getRankingHakaseComment(results) {
+  if (!results || results.length === 0) {
+    return 'まだ結果データがありません。';
+  }
+
+  const top = results[0];
+  const topName =
+    top.groupLabel ||
+    getGroupLabel(top.groupId);
+
+  const topGrowth = Number(top.growthRate || 0);
+
+  if (results.length === 1) {
+    return '現在トップは ' +
+      topName +
+      '。利益成長率は ' +
+      formatPercent(topGrowth, 2) +
+      ' です。初期状態からの利益の伸びに注目しましょう。';
+  }
+
+  const second = results[1];
+  const secondName =
+    second.groupLabel ||
+    getGroupLabel(second.groupId);
+
+  const secondGrowth = Number(second.growthRate || 0);
+  const diffPoint = (topGrowth - secondGrowth) * 100;
+
+  if (diffPoint < 5) {
+    return '接戦です！現在トップは ' +
+      topName +
+      '。利益成長率は ' +
+      formatPercent(topGrowth, 2) +
+      '。' +
+      secondName +
+      'との差はわずか ' +
+      diffPoint.toFixed(2) +
+      'ポイントです。';
+  }
+
+  return '現在トップは ' +
+    topName +
+    '。利益成長率は ' +
+    formatPercent(topGrowth, 2) +
+    ' です。2位の ' +
+    secondName +
+    'との差は ' +
+    diffPoint.toFixed(2) +
+    'ポイントです。利益額だけでなく、初期状態からの伸びに注目しましょう。';
+}
+
+/**
+ * @summary 全体成績画面の初期表示時に、ランキング表示に必要な初期データを読み込む
+ * @function initOverallView
+ * @read loadInitialData()
+ * @write 全体成績画面の初期データ読み込みを開始する
+ * @update 2026-06-30
+ */
+function initOverallView() {
+  loadInitialData();
+}
+</script>

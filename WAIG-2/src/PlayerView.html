@@ -1,0 +1,1517 @@
+<div id="player-root">
+
+  <h1>施策選択</h1>
+
+  <p>プレイヤー枠を選択してください。</p>
+
+  <div id="group-list">
+    読み込み中...
+  </div>
+
+</div>
+
+<script>
+
+const APP_URL = APP_CONTEXT.appUrl || '';
+let currentGroupId = APP_CONTEXT.groupId || '';
+let selectedGroupId = null;
+
+let selectedActionIds = [];
+let selectedActionMeta = {};
+const REQUIRED_ACTION_COUNT = 2;
+const MAX_ACTION_COST = 4;
+
+let latestPlayerState = null;
+let latestScenarioState = null;
+let latestPreviousResult = null;
+let latestInitialKpi = null;
+let latestSubmitState = null;
+
+let usedActionIds = [];
+
+/**
+ * @summary プレイヤー画面処理：施策選択画面の基本HTMLを描画する
+ * @function renderPlayerScreen
+ * @read currentGroupId, escapeHtml()
+ * @write player-root 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+function renderPlayerScreen() {
+  const root = document.getElementById('player-root');
+  if (!root) return;
+
+  root.innerHTML =
+    '<h1>施策選択</h1>' +
+
+    '<p>プレイヤー枠：<b>' + escapeHtml(currentGroupId) + '</b></p>' +
+
+    '<section class="card">' +
+      '<div id="submit-progress-area" class="submit-progress-box">' +
+        '提出状況を確認中...' +
+      '</div>' +
+    '</section>' +
+  
+    '<section class="card">' +
+      '<div id="turn-info">ターン情報を取得中...</div>' +
+    '</section>' +
+
+    '<section class="card">' +
+      '<h2>残り時間</h2>' +
+      '<div id="timer-area">タイマーを取得中...</div>' +
+    '</section>' +
+
+    '<section class="card">' +
+      '<div id="previous-result">前ターン結果を取得中...</div>' +
+    '</section>' +
+
+    '<section class="card">' +
+      '<div id="scenario-info">市場環境を取得中...</div>' +
+    '</section>' +
+
+    '<div class="hakase-box">' +
+      '<img ' +
+        'id="hakase-image" ' +
+        'src="https://drive.google.com/thumbnail?id=1nM8JFgEDUixB1tORdoIoc1NcjQxAdQCG" ' +
+        'class="hakase-avatar" ' +
+        'alt="WAIG博士">' +
+
+      '<div class="hakase-comment-area">' +
+        '<h3>WAIG博士</h3>' +
+        '<div id="environment-comment">' +
+          '今回の市場環境を確認してから、施策を考えるのですぞ。' +
+        '</div>' +
+
+        '<button type="button" class="btn-ai" onclick="showAiPrompt()">' +
+          'AIに相談する' +
+        '</button>' +
+
+        '<div id="ai-prompt-area" style="display:none;margin-top:10px;"></div>' +
+      '</div>' +
+    '</div>' +
+
+    '<section class="card">' +
+      '<h2>今回の施策を選ぶ</h2>' +
+
+      '<p>' +
+        '現在ターンの市場環境と前ターン結果を確認し、実行する施策を2つ選んでください。' +
+      '</p>' +
+
+      '<p class="info-text">' +
+        '同じ施策は選べません。ただし、A00｜パスは2回選択できます。合計コストは4以内です。' +
+      '</p>' +
+
+      '<div id="action-selection-status" class="info-text">' +
+        '選択中：0 / 2　合計コスト：0 / 4' +
+      '</div>' +
+
+      '<div id="action-list" class="action-grid">' +
+        '施策を読み込み中...' +
+      '</div>' +
+
+      '<button id="submit-action-button" type="button" onclick="submitAction()" disabled>' +
+        '施策を提出する' +
+      '</button>' +
+
+      '<div id="submit-message"></div>' +
+
+      '<details class="card">' +
+        '<summary><b>指標の説明</b></summary>' +
+
+        '<p><b>GI</b>：一般流入数（General Inflow）</p>' +
+        '<p><b>AI</b>：広告流入数（Ad Inflow）</p>' +
+        '<p><b>CVR</b>：購入率</p>' +
+        '<p><b>AOV</b>：平均注文額</p>' +
+        '<p><b>CPC</b>：広告単価</p>' +
+        '<p><b>ROAS</b>：広告費回収率</p>' +
+      '</details>' +
+    '</section>';
+}
+
+/**
+ * @summary プレイヤー画面から参照し、施策選択可能なプレイヤー枠一覧を取得する
+ * @function loadGroups
+ * @read google.script.run.getPlayerGroupList()
+ * @write group-list 要素にプレイヤー枠一覧またはエラーを表示する
+ * @update 2026-06-30
+ */
+function loadGroups() {
+  const groupList = document.getElementById('group-list');
+  if (!groupList) return;
+
+  google.script.run
+    .withSuccessHandler(renderGroups)
+    .withFailureHandler(function(error) {
+      groupList.innerHTML =
+        '<p style="color:red;">プレイヤー枠の取得に失敗しました。</p><pre>' +
+        escapeHtml(error.message || error) +
+        '</pre>';
+    })
+    .getPlayerGroupList();
+}
+
+/**
+ * @summary プレイヤー画面処理：プレイヤー枠選択ボタンを描画する
+ * @function renderGroups
+ * @read groups, renderPlayerScreen(), loadCurrentTurn()
+ * @write group-list 要素にプレイヤー枠ボタンを追加する
+ * @update 2026-06-30
+ */
+function renderGroups(groups) {
+  const container = document.getElementById('group-list');
+  container.innerHTML = '';
+
+  if (!groups || groups.length === 0) {
+    container.innerHTML =
+      '<p>施策選択できるプレイヤー枠がありません。</p>' +
+      '<p>先に左メニューの「参加登録」と「初期設定」を完了してください。</p>';
+    return;
+  }
+
+  groups.forEach(function(group) {
+    const button = document.createElement('button');
+
+    button.type = 'button';
+    button.textContent = group.displayName || group.groupId;
+    button.className = 'group-button';
+
+    button.onclick = function() {
+     currentGroupId = group.groupId;
+     renderPlayerScreen();
+     loadCurrentTurn();
+     startSubmitProgressAutoRefresh();
+   };
+
+    container.appendChild(button);
+  });
+}
+
+let timerIntervalId = null;
+let timerRemainingSeconds = 0;
+
+/**
+ * @summary プレイヤー画面から参照し、現在ターンの残り時間を取得する
+ * @function loadTimerState
+ * @read google.script.run.getTimerState(), renderTimer()
+ * @write timer-area にタイマー情報またはエラーを表示する
+ * @update 2026-06-30
+ */
+function loadTimerState() {
+  google.script.run
+    .withSuccessHandler(function(data) {
+      renderTimer(data);
+    })
+    .withFailureHandler(function(error) {
+      const area = document.getElementById('timer-area');
+      if (area) {
+        area.innerHTML =
+          '<p style="color:red;">タイマーの取得に失敗しました。</p>' +
+          '<pre>' + escapeHtml(error.message || error) + '</pre>';
+      }
+    })
+    .getTimerState();
+}
+
+/**
+ * @summary プレイヤー画面処理：取得したタイマー状態をもとに残り時間表示を開始する
+ * @function renderTimer
+ * @read data, updateTimerDisplay()
+ * @write timer-area の表示を更新し、カウントダウンを開始する
+ * @update 2026-06-30
+ */
+function renderTimer(data) {
+  const area = document.getElementById('timer-area');
+  if (!area) return;
+
+  if (!data || !data.enabled) {
+    area.innerHTML =
+      '<p>' + escapeHtml((data && data.message) || 'タイマーは未設定です。') + '</p>';
+    return;
+  }
+
+  timerRemainingSeconds = Number(data.remainingSeconds || 0);
+
+  if (timerIntervalId) {
+    clearInterval(timerIntervalId);
+  }
+
+  updateTimerDisplay();
+
+  timerIntervalId = setInterval(function() {
+    timerRemainingSeconds--;
+
+    if (timerRemainingSeconds <= 0) {
+      timerRemainingSeconds = 0;
+      clearInterval(timerIntervalId);
+      timerIntervalId = null;
+    }
+
+    updateTimerDisplay();
+  }, 1000);
+}
+
+/**
+ * @summary プレイヤー画面処理：残り時間をmm:ss形式で表示する
+ * @function updateTimerDisplay
+ * @read timerRemainingSeconds
+ * @write timer-area 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+function updateTimerDisplay() {
+  const area = document.getElementById('timer-area');
+  if (!area) return;
+
+  const minutes = Math.floor(timerRemainingSeconds / 60);
+  const seconds = timerRemainingSeconds % 60;
+
+  const text =
+    String(minutes).padStart(2, '0') +
+    ':' +
+    String(seconds).padStart(2, '0');
+
+  if (timerRemainingSeconds <= 0) {
+    area.innerHTML =
+      '<p class="info-text"><b>時間終了です。施策を提出してください。</b></p>';
+    return;
+  }
+
+  area.innerHTML =
+    '<p style="font-size:1.8em;font-weight:bold;">' +
+    text +
+    '</p>';
+}
+
+/**
+ * @summary プレイヤー画面から参照し、現在ターンに必要な画面状態をまとめて取得する
+ * @function loadCurrentTurn
+ * @read currentGroupId, google.script.run.getPlayerActionScreenState()
+ * @write ターン情報・タイマー・前ターン結果・市場環境・施策選択状態を更新する
+ * @update 2026-06-30
+ */
+function loadCurrentTurn() {
+  showLoading();
+
+  google.script.run
+    .withSuccessHandler(function(screenState) {
+      hideLoading();
+
+      screenState = screenState || {};
+
+      const data = screenState.playerState || {};
+      latestPlayerState = data;
+
+      document.getElementById('turn-info').innerHTML =
+      '<details class="turn-info-details">' +
+        '<summary><b>現在ターン：Turn ' + escapeHtml(data.currentTurn) + '</b></summary>' +
+        '<ul class="turn-summary-list">' +
+          '<li><b>案件：</b>' +
+            escapeHtml(data.challengeId) + '｜' + escapeHtml(data.challengeName) +
+          '</li>' +
+          '<li><b>ミッション：</b>' +
+            escapeHtml(data.missionId) + '｜' + escapeHtml(data.missionName) +
+          '</li>' +
+          '<li><b>ミッション難易度：</b>' +
+            escapeHtml(data.missionDifficulty || '-') +
+          '</li>' +
+          '<li><b>スキル：</b>' +
+            escapeHtml(data.skillId) + '｜' + escapeHtml(data.skillName) +
+          '</li>' +
+        '</ul>' +
+      '</details>';
+
+      loadTimerState();
+
+      if (Number(data.currentTurn) === 0) {
+        document.getElementById('scenario-info').innerHTML =
+          '<p>まだゲームは開始されていません。GMの案内をお待ちください。</p>';
+
+        document.getElementById('action-list').innerHTML =
+          '<p>ターン1開始後に施策を選択できます。</p>';
+
+        document.getElementById('submit-action-button').style.display = 'none';
+        return;
+      }
+
+      if (screenState.previousTurnResult) {
+        renderPreviousTurnResult(screenState.previousTurnResult);
+      } else {
+        loadPreviousTurnResult();
+      }
+      
+      if (screenState.scenarioState) {
+        renderScenarioFromState(screenState.scenarioState);
+      }
+
+      if (screenState.actionPageState) {
+        renderActionPageState(screenState.actionPageState);
+      }
+    })
+    .withFailureHandler(function(error) {
+      hideLoading();
+
+      document.getElementById('turn-info').innerHTML =
+        '<p style="color:red;">' + escapeHtml(error.message || error) + '</p>';
+
+      document.getElementById('scenario-info').innerHTML = '';
+
+      document.getElementById('action-list').innerHTML =
+        '<p>先に左メニューの「初期設定」を完了してください。</p>';
+
+      document.getElementById('submit-action-button').style.display = 'none';
+    })
+    .getPlayerActionScreenState(currentGroupId);
+}
+
+/**
+ * @summary プレイヤー画面から参照し、指定ターンの市場環境を取得して表示する
+ * @function loadScenario
+ * @read turn, google.script.run.getScenarioState(), formatEffectText(), makeEnvironmentComment()
+ * @write scenario-info と environment-comment の表示を更新する
+ * @update 2026-06-30
+ */
+function loadScenario(turn) {
+  showLoading();
+
+  google.script.run
+    .withSuccessHandler(function(data) {
+      hideLoading();
+      latestScenarioState = data;
+
+      document.getElementById('scenario-info').innerHTML =
+        '<h2>今回の市場環境</h2>' +
+
+        '<ul class="scenario-summary-list">' +
+          '<li>' +
+            '<b>市場：</b>' +
+            escapeHtml(data.trendId) + '｜' + escapeHtml(data.trendName) +
+            '<div class="scenario-effect">' +
+              '<b>影響：</b>' +
+              formatEffectText(data.trendEffect) +
+            '</div>' +
+          '</li>' +
+
+          '<li>' +
+            '<b>競合：</b>' +
+            escapeHtml(data.tcId) + '｜' + escapeHtml(data.tcName) +
+            '<div class="scenario-effect">' +
+              '<b>影響：</b>' +
+              formatEffectText(data.tcEffect) +
+            '</div>' +
+          '</li>' +
+        '</ul>';
+
+      const commentArea = document.getElementById('environment-comment');
+      if (commentArea) {
+        commentArea.textContent = makeEnvironmentComment(data);
+      }
+
+      if (latestPreviousResult) {
+        renderPreviousTurnResult(latestPreviousResult);
+      }
+    })
+    .withFailureHandler(function(error) {
+      hideLoading();
+
+      document.getElementById('scenario-info').innerHTML =
+        '<p style="color:red;">市場環境の取得に失敗しました。</p>' +
+        '<pre>' + escapeHtml(error.message || error) + '</pre>';
+    })
+    .getScenarioState(turn);
+}
+
+/**
+ * @summary プレイヤー画面処理：KPI略称を説明付き表記に変換する
+ * @function formatEffectText
+ * @read text, escapeHtml()
+ * @write KPI略称を日本語説明付きに置換したHTMLエスケープ済み文字列を返す
+ * @update 2026-06-30
+ */
+function formatEffectText(text) {
+  if (!text) return '';
+
+  return escapeHtml(
+    String(text)
+      .replace(/GI/g, 'GI（一般流入）')
+      .replace(/AI/g, 'AI（広告流入）')
+      .replace(/CVR/g, 'CVR（購入率）')
+      .replace(/AOV/g, 'AOV（平均注文額）')
+      .replace(/CPC/g, 'CPC（広告単価）')
+      .replace(/ROAS/g, 'ROAS（広告費回収率）')
+  );
+}
+
+/**
+ * @summary プレイヤー画面処理：市場環境に対するWAIG博士コメントを生成する
+ * @function makeEnvironmentComment
+ * @read data
+ * @write 市場環境確認を促すコメント文字列を返す
+ * @update 2026-06-30
+ */
+function makeEnvironmentComment(data) {
+  return '市場と競合の変化を確認してから、次の一手を考えましょう。';
+}
+
+/**
+ * @summary プレイヤー画面から実行し、AI相談用プロンプトを表示する
+ * @function showAiPrompt
+ * @read makeAiConsultPrompt(), ai-prompt-area 要素
+ * @write ai-prompt-area にプロンプト用テキストエリアとコピー操作を表示する
+ * @update 2026-06-30
+ */
+function showAiPrompt() {
+  const area = document.getElementById('ai-prompt-area');
+  if (!area) {
+    alert('AI相談エリアが見つかりません。');
+    return;
+  }
+
+  const prompt = makeAiConsultPrompt();
+
+  area.style.display = 'block';
+
+  area.innerHTML =
+    '<h3>AI相談用プロンプト</h3>' +
+    '<textarea id="ai-prompt-text" rows="12" style="width:100%; box-sizing:border-box;">' +
+    escapeHtml(prompt) +
+    '</textarea>' +
+    '<button type="button" onclick="copyAiPrompt()">コピー</button>';
+}
+
+/**
+ * @summary プレイヤー画面内部処理：AI相談プロンプト用にROAS値を整形する
+ * @function formatPromptRoas
+ * @read value
+ * @write 数値の場合は小数2桁、空値の場合はハイフン、数値化できない場合は元の文字列を返す
+ * @update 2026-06-30
+ */
+function formatPromptRoas(value) {
+  if (value === null || value === undefined || value === '') {
+    return '-';
+  }
+
+  const number = Number(value);
+
+  if (isNaN(number)) {
+    return String(value);
+  }
+
+  return number.toFixed(2);
+}
+
+/**
+ * @summary プレイヤー画面内部処理：AI相談プロンプト用にKPI略称を説明付き表記へ変換する
+ * @function formatAiEffectText
+ * @read text
+ * @write KPI略称を日本語説明付きに置換した文字列を返す
+ * @update 2026-06-30
+ */
+function formatAiEffectText(text) {
+  if (!text) {
+    return '';
+  }
+
+  return String(text)
+    .replace(/GI/g, 'GI（一般流入）')
+    .replace(/AI/g, 'AI（広告流入）')
+    .replace(/CVR/g, 'CVR（購入率）')
+    .replace(/AOV/g, 'AOV（平均注文額）')
+    .replace(/CPC/g, 'CPC（広告単価）')
+    .replace(/ROAS/g, 'ROAS（広告費回収率）');
+}
+
+/**
+ * @summary プレイヤー画面処理：現在状態・前ターン結果・市場環境からAI相談用プロンプトを生成する
+ * @function makeAiConsultPrompt
+ * @read latestPlayerState, latestScenarioState, latestPreviousResult, formatPromptRoas(), formatAiEffectText()
+ * @write AI相談用プロンプト文字列を返す
+ * @update 2026-06-30
+ */
+function makeAiConsultPrompt() {
+  const state = latestPlayerState || {};
+  const scenario = latestScenarioState || {};
+  const prev = latestPreviousResult || {};
+
+  return [
+    'WAIG博士からの相談メモ',
+    '',
+    '私はECサイトの運営担当です。',
+    '',
+    '次の状況を踏まえて、利益を改善するための施策を考えたいです。',
+    '',
+    '【案件】',
+    (state.challengeId || '') + '｜' + (state.challengeName || ''),
+    '',
+    '【ミッション】',
+    (state.missionId || '') + '｜' + (state.missionName || ''),
+    '',
+    '【ミッション難易度】',
+    state.missionDifficulty || '-',
+    '',
+    '【スキル強化】',
+    (state.skillId || '') + '｜' + (state.skillName || ''),
+    '',
+    '【現在のKPI（前ターン終了時点）】',
+    'Turn：' + (prev.turn ?? ''),
+    'GI（一般流入）：' + Number(prev.gi || 0).toLocaleString(),
+    'AI（広告流入）：' + Number(prev.ai || 0).toLocaleString(),
+    '離脱率：' + Number(prev.bounce || 0).toFixed(3),
+    '回遊：' + Number(prev.browse || 0).toFixed(2),
+    'CVR：' + Number(prev.cvr || 0).toFixed(4),
+    'AOV：' + Number(prev.aov || 0).toLocaleString(),
+    'CPC：' + Number(prev.cpc || 0).toLocaleString(),
+    '',
+    '【前ターンの売上・利益】',
+    '売上：' + Number(prev.sales || 0).toLocaleString(),
+    '広告費：' + Number(prev.adCost || 0).toLocaleString(),
+    '利益：' + Number(prev.profit || 0).toLocaleString(),
+    'ROAS：' + formatPromptRoas(prev.roas),
+    '利益順位：' + (prev.rank || ''),
+    '',
+    '【今回の市場環境】',
+    '市場の変化：' + (scenario.trendId || '') + '｜' + (scenario.trendName || ''),
+    '市場への影響：' + formatAiEffectText(scenario.trendEffect || ''),
+    '',
+    '競合の変化：' + (scenario.tcId || '') + '｜' + (scenario.tcName || ''),
+    '競合への影響：' + formatAiEffectText(scenario.tcEffect || ''),
+    '',
+    '【相談したいこと】',
+    '',
+    'まず現在のKPIを分析し、利益改善における最も大きな課題を特定してください。',
+    '',
+    'そのうえで、利益改善のために有効と思われる施策の組み合わせを3案提案してください。',
+    '',
+    '各案について、次の4点を説明してください。',
+    '',
+    '1. なぜ有効なのか',
+    '2. 改善が期待できるKPI',
+    '3. 利益への影響',
+    '4. 注意点',
+    '',
+    '最後に、',
+    '「今回もっとも優先して実施すべき施策の組み合わせ」を1つ選び、理由を説明してください。',
+    '',
+    'なお、実際のゲームでは施策カードを2枚選択します。',
+    'ただし、具体的な施策カード名ではなく、改善すべきKPIと施策の方向性を中心に提案してください。',
+    '',
+    '回答は初心者にも分かるように、簡潔にお願いします。'
+  ].join('\n');
+}
+
+/**
+ * @summary プレイヤー画面から実行し、AI相談用プロンプトをクリップボードにコピーする
+ * @function copyAiPrompt
+ * @read ai-prompt-text 要素
+ * @write テキストエリアの内容をクリップボードへコピーする
+ * @update 2026-06-30
+ */
+function copyAiPrompt() {
+  const textArea = document.getElementById('ai-prompt-text');
+  if (!textArea) return;
+
+  textArea.select();
+  document.execCommand('copy');
+
+  alert('AI相談用プロンプトをコピーしました。');
+}
+
+/**
+ * @summary プレイヤー画面から参照し、指定グループの前ターン結果を取得する
+ * @function loadPreviousTurnResult
+ * @read currentGroupId, google.script.run.getPreviousTurnResult()
+ * @write previous-result 要素に前ターン結果またはエラーを表示する
+ * @update 2026-06-30
+ */
+function loadPreviousTurnResult() {
+  google.script.run
+    .withSuccessHandler(renderPreviousTurnResult)
+    .withFailureHandler(function(error) {
+      document.getElementById('previous-result').innerHTML =
+        '<p style="color:red;">前ターン結果の取得に失敗しました。</p>';
+    })
+    .getPreviousTurnResult(currentGroupId);
+}
+
+/**
+ * @summary プレイヤー画面処理：前ターン終了時点のKPI・売上・利益を描画する
+ * @function renderPreviousTurnResult
+ * @read result, formatNumber(), formatRate(), escapeHtml()
+ * @write previous-result 要素のinnerHTMLを更新し、latestPreviousResultを保持する
+ * @update 2026-06-30
+ */
+function renderPreviousTurnResult(result) {
+  latestPreviousResult = result;
+  const area = document.getElementById('previous-result');
+  if (!area) return;
+
+  if (!result) {
+    area.innerHTML = '<p>前ターン結果はまだありません。</p>';
+    return;
+  }
+
+  const hasScenario = !!latestScenarioState;
+  const currentTurn = Number(
+    (latestPlayerState && latestPlayerState.currentTurn) ||
+    (Number(result.turn || 0) + 1)
+  );
+
+  const deltas = hasScenario
+    ? mergeKpiDeltas_([
+        parseKpiEffectText_(latestScenarioState.trendEffect),
+        parseKpiEffectText_(latestScenarioState.tcEffect)
+      ])
+    : null;
+
+  area.innerHTML =
+    '<h2>前ターン終了時点のKPI</h2>' +
+    '<table>' +
+      '<tr>' +
+        '<th>Turn</th>' +
+        '<th>GI(一般流入)</th>' +
+        '<th>AI(広告流入)</th>' +
+        '<th>離脱率</th>' +
+        '<th>回遊</th>' +
+        '<th>CVR</th>' +
+        '<th>AOV(客単価)</th>' +
+        '<th>CPC</th>' +
+      '</tr>' +
+      buildKpiBaseRowHtml_(result) +
+      (hasScenario ? buildKpiEnvironmentRowHtml_(result, deltas, currentTurn) : '') +
+    '</table>' +
+
+    '<p class="note">' +
+      (hasScenario
+        ? '※下段は、前ターン終了時点のKPIに今回の市場・競合影響を反映した値です。変化したセルを強調しています。'
+        : '※今回の市場環境を取得すると、環境反映後のKPIも表示します。') +
+    '</p>' +
+
+    '<details style="margin-top:10px;">' +
+      '<summary><b>売上・利益を見る</b></summary>' +
+      '<table>' +
+        '<tr>' +
+          '<th>売上</th>' +
+          '<th>広告費</th>' +
+          '<th>利益</th>' +
+          '<th>ROAS</th>' +
+          '<th>利益順位</th>' +
+        '</tr>' +
+        '<tr>' +
+          '<td>' + Number(result.sales).toLocaleString() + '</td>' +
+          '<td>' + Number(result.adCost).toLocaleString() + '</td>' +
+          '<td>' + Number(result.profit).toLocaleString() + '</td>' +
+          '<td>' + escapeHtml(result.roas) + '</td>' +
+          '<td>' + escapeHtml(result.rank) + '</td>' +
+        '</tr>' +
+      '</table>' +
+    '</details>';
+}
+/**
+ * @summary プレイヤー画面から参照し、施策選択状態・使用済み施策・施策一覧を取得する
+ * @function loadActions
+ * @read currentGroupId, google.script.run.getActionPageState(), normalizeActionIdsFromState(), renderActions()
+ * @write 施策一覧・提出状態・選択状態を更新する
+ * @update 2026-06-30
+ */
+function loadActions() {
+  google.script.run
+    .withSuccessHandler(function(data) {
+      data = data || {};
+
+      const state = data.submitState || {};
+      const usedIds = data.usedActionIds || [];
+      const actions = data.actions || [];
+
+      latestSubmitState = state;
+
+      const submitButton = document.getElementById('submit-action-button');
+      const message = document.getElementById('submit-message');
+
+      const submittedActionIds = normalizeActionIdsFromState(state);
+
+      if (state && state.submitted) {
+        selectedActionIds = submittedActionIds.slice(0, REQUIRED_ACTION_COUNT);
+
+        message.innerHTML =
+          '<p>提出済みの施策：</p>' +
+          '<ul>' +
+            selectedActionIds.map(function(actionId) {
+              return '<li>' + escapeHtml(actionId) + '</li>';
+            }).join('') +
+          '</ul>' +
+          '<p>変更する場合は、未使用の施策を2つ選んで再提出してください。</p>';
+
+        submitButton.textContent = '施策を再提出する';
+        submitButton.disabled = false;
+        submitButton.className = 'ready';
+
+      } else {
+        selectedActionIds = [];
+
+        message.innerHTML = '';
+        submitButton.textContent = '施策を提出する';
+        submitButton.disabled = true;
+        submitButton.className = '';
+      }
+
+      const submittedMap = {};
+
+      selectedActionIds.forEach(function(actionId) {
+        submittedMap[String(actionId || '').trim()] = true;
+      });
+
+      usedActionIds = usedIds.filter(function(actionId) {
+        const id = String(actionId || '').trim();
+        return !submittedMap[id];
+      });
+
+      renderActions(actions);
+      markSelectedActions(selectedActionIds);
+      updateActionSelectionStatus();
+    })
+    .withFailureHandler(function(error) {
+      document.getElementById('action-list').innerHTML =
+        '<p style="color:red;">施策情報の取得に失敗しました。</p><pre>' +
+        escapeHtml(error.message || error) +
+        '</pre>';
+
+      document.getElementById('submit-action-button').disabled = true;
+    })
+    .getActionPageState(currentGroupId);
+}
+
+/**
+ * @summary プレイヤー画面内部処理：提出状態から施策ID配列を正規化して取得する
+ * @function normalizeActionIdsFromState
+ * @read state
+ * @write actionIds, action1, action2 などの形式ゆれを吸収した施策ID配列を返す
+ * @update 2026-06-30
+ */
+function normalizeActionIdsFromState(state) {
+  if (!state) {
+    return [];
+  }
+
+  if (Array.isArray(state.actionIds)) {
+    return state.actionIds
+      .map(function(actionId) {
+        return String(actionId || '').trim();
+      })
+      .filter(Boolean);
+  }
+
+  const actionIds = [];
+
+  if (state.action1) actionIds.push(state.action1);
+  if (state.action2) actionIds.push(state.action2);
+  if (state.action_1) actionIds.push(state.action_1);
+  if (state.action_2) actionIds.push(state.action_2);
+
+  if (actionIds.length === 0 && state.actionId) {
+    actionIds.push(state.actionId);
+  }
+
+  return actionIds
+    .map(function(actionId) {
+      return String(actionId || '').trim();
+    })
+    .filter(Boolean);
+}
+
+/**
+ * @summary プレイヤー画面処理：選択済み施策ボタンにselectedクラスを反映する
+ * @function markSelectedActions
+ * @read actionIds, action-list内のbutton要素
+ * @write 施策ボタンのselectedクラスを更新する
+ * @update 2026-06-30
+ */
+function markSelectedActions(actionIds) {
+  const selectedMap = {};
+
+  (actionIds || []).forEach(function(actionId) {
+    selectedMap[String(actionId || '').trim()] = true;
+  });
+
+  document.querySelectorAll('#action-list button')
+    .forEach(function(btn) {
+      if (selectedMap[btn.dataset.actionId]) {
+        btn.classList.add('selected');
+      } else {
+        btn.classList.remove('selected');
+      }
+    });
+}
+
+/**
+ * @summary プレイヤー画面処理：施策カード一覧をボタンとして描画する
+ * @function renderActions
+ * @read actions, selectedActionIds, usedActionIds, getActionCost(), toggleActionSelection()
+ * @write action-list 要素に施策ボタンを描画し、selectedActionMetaを更新する
+ * @update 2026-07-06
+ */
+function renderActions(actions) {
+  const container = document.getElementById('action-list');
+  if (!container) return;
+
+  container.className = 'action-grid';
+  container.innerHTML = '';
+  selectedActionMeta = {};
+
+  if (!actions || actions.length === 0) {
+    container.innerHTML =
+      '<p>選択できる施策がありません。</p>';
+    return;
+  }
+
+  actions.forEach(function(action) {
+    const button = document.createElement('button');
+    const actionId = String(action.actionId || '').trim();
+    const actionLabel = action.actionLabel || actionId;
+
+    selectedActionMeta[actionId] = action;
+
+    const selectedCount = selectedActionIds.filter(function(id) {
+      return String(id || '').trim() === actionId;
+    }).length;
+
+    const isSelected = selectedCount > 0;
+
+    const isUsed =
+      actionId !== 'A00' &&
+      usedActionIds.indexOf(actionId) !== -1 &&
+      !isSelected;
+
+    button.type = 'button';
+    button.className = 'action-button';
+    button.dataset.actionId = actionId;
+
+    if (isSelected) {
+      button.classList.add('selected');
+    }
+
+    if (isUsed) {
+      button.classList.add('used-action');
+      button.disabled = true;
+      button.textContent = actionLabel + '（使用済み）';
+    } else {
+      const cost = getActionCost(action);
+
+      let labelText =
+        cost > 0
+          ? actionLabel + '（コスト' + cost + '）'
+          : actionLabel;
+
+      // A00｜パスは同一ターンで2回まで選択可能なので、選択回数を表示する
+      if (actionId === 'A00' && selectedCount > 0) {
+        labelText += '（選択中 ' + selectedCount + '/2）';
+      }
+
+      button.textContent = labelText;
+
+      button.onclick = function() {
+        toggleActionSelection(actionId);
+      };
+    }
+
+    container.appendChild(button);
+  });
+
+  updateActionSelectionStatus();
+}
+
+/**
+ * @summary プレイヤー画面処理：施策ボタンの選択・選択解除を切り替える
+ * @function toggleActionSelection
+ * @read actionId, selectedActionIds, REQUIRED_ACTION_COUNT
+ * @write selectedActionIdsを更新し、選択状態と提出可否表示を再計算する
+ * @update 2026-07-06
+ */
+function toggleActionSelection(actionId) {
+  const targetActionId = String(actionId || '').trim();
+
+  if (!targetActionId) {
+    return;
+  }
+
+  // A00｜パスだけは、同一ターンで2回まで選択可能
+  // 1回目：A00を追加
+  // 2回目：A00をもう1つ追加
+  // 3回目：A00をすべて解除
+  if (targetActionId === 'A00') {
+    const a00Count = selectedActionIds.filter(function(id) {
+      return String(id || '').trim() === 'A00';
+    }).length;
+
+    if (a00Count < 2 && selectedActionIds.length < REQUIRED_ACTION_COUNT) {
+      selectedActionIds.push('A00');
+    } else {
+      selectedActionIds = selectedActionIds.filter(function(id) {
+        return String(id || '').trim() !== 'A00';
+      });
+    }
+
+    markSelectedActions(selectedActionIds);
+    updateActionSelectionStatus();
+    return;
+  }
+
+  const index = selectedActionIds.indexOf(targetActionId);
+
+  if (index >= 0) {
+    selectedActionIds.splice(index, 1);
+  } else {
+    if (selectedActionIds.length >= REQUIRED_ACTION_COUNT) {
+      alert('施策は2つまで選択できます。別の施策を選ぶ場合は、先に選択済みの施策を外してください。');
+      return;
+    }
+
+    selectedActionIds.push(targetActionId);
+  }
+
+  markSelectedActions(selectedActionIds);
+  updateActionSelectionStatus();
+}
+
+/**
+ * @summary プレイヤー画面処理：選択中の施策数・合計コスト・提出ボタン状態を更新する
+ * @function updateActionSelectionStatus
+ * @read selectedActionIds, selectedActionMeta, getSelectedActionCost(), latestSubmitState
+ * @write action-selection-status と submit-action-button の表示状態を更新する
+ * @update 2026-06-30
+ */
+function updateActionSelectionStatus() {
+  const status = document.getElementById('action-selection-status');
+  const submitButton = document.getElementById('submit-action-button');
+
+  const totalCost = getSelectedActionCost();
+  const count = selectedActionIds.length;
+
+  const selectedLabels = selectedActionIds.map(function(actionId) {
+    const action = selectedActionMeta[actionId] || {};
+    return action.actionLabel || actionId;
+  });
+
+  let html =
+    '<p><b>選択中：</b>' +
+    escapeHtml(count) +
+    ' / ' +
+    escapeHtml(REQUIRED_ACTION_COUNT) +
+    '　<b>合計コスト：</b>' +
+    escapeHtml(totalCost) +
+    ' / ' +
+    escapeHtml(MAX_ACTION_COST) +
+    '</p>';
+
+  if (selectedLabels.length > 0) {
+    html +=
+      '<p>' +
+      selectedLabels.map(function(label) {
+        return escapeHtml(label);
+      }).join(' ／ ') +
+      '</p>';
+  }
+
+  if (totalCost > MAX_ACTION_COST) {
+    html +=
+      '<p style="color:red;">合計コストが上限を超えています。</p>';
+  }
+
+  if (status) {
+    status.innerHTML = html;
+  }
+
+  if (submitButton) {
+    const canSubmit =
+      count === REQUIRED_ACTION_COUNT &&
+      totalCost <= MAX_ACTION_COST;
+
+    submitButton.disabled = !canSubmit;
+    submitButton.className = canSubmit ? 'ready' : '';
+
+    if (canSubmit) {
+      submitButton.textContent =
+        latestSubmitState && latestSubmitState.submitted
+          ? '施策を再提出する'
+          : '施策を提出する';
+    } else if (totalCost > MAX_ACTION_COST) {
+      submitButton.textContent = '合計コストが上限を超えています';
+    } else {
+      submitButton.textContent =
+        latestSubmitState && latestSubmitState.submitted
+          ? '施策を再提出する'
+          : '施策を提出する';
+    }
+  }
+}
+
+/**
+ * @summary プレイヤー画面内部処理：選択中施策の合計コストを計算する
+ * @function getSelectedActionCost
+ * @read selectedActionIds, selectedActionMeta, getActionCost()
+ * @write 選択中施策の合計コストを返す
+ * @update 2026-06-30
+ */
+function getSelectedActionCost() {
+  return selectedActionIds.reduce(function(total, actionId) {
+    return total + getActionCost(selectedActionMeta[actionId]);
+  }, 0);
+}
+
+/**
+ * @summary プレイヤー画面内部処理：施策データからコスト値を取得する
+ * @function getActionCost
+ * @read action
+ * @write cost, actionCost, action_cost などの形式ゆれを吸収した数値コストを返す
+ * @update 2026-06-30
+ */
+function getActionCost(action) {
+  if (!action) {
+    return 0;
+  }
+
+  const value =
+    action.cost ??
+    action.actionCost ??
+    action.costValue ??
+    action.action_cost ??
+    action.cost_point ??
+    0;
+
+  const number = Number(value);
+
+  if (isNaN(number)) {
+    return 0;
+  }
+
+  return number;
+}
+
+/**
+ * @summary プレイヤー画面から実行し、選択した施策2枚を提出または再提出する
+ * @function submitAction
+ * @read currentGroupId, selectedActionIds, getSelectedActionCost(), google.script.run.submitTurnAction()
+ * @write turn_logに施策提出内容を保存し、submit-message と submit-action-button を更新する
+ * @update 2026-06-30
+ */
+function submitAction() {
+  if (selectedActionIds.length !== REQUIRED_ACTION_COUNT) {
+    alert('施策を2つ選択してください。');
+    return;
+  }
+
+  const totalCost = getSelectedActionCost();
+
+  if (totalCost > MAX_ACTION_COST) {
+    alert('合計コストが上限を超えています。合計コスト4以内で選択してください。');
+    return;
+  }
+
+  const submitButton = document.getElementById('submit-action-button');
+
+  submitButton.disabled = true;
+  submitButton.textContent = '提出中...';
+
+  showLoading();
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      hideLoading();
+
+      const submittedIds =
+        result && Array.isArray(result.actionIds)
+          ? result.actionIds
+          : selectedActionIds;
+
+      document.getElementById('submit-message').innerHTML =
+        '<p class="info-text">施策を提出しました。ターン ' +
+        escapeHtml(result.turn) +
+        '</p>' +
+        '<p>提出した施策：' +
+        submittedIds.map(function(actionId) {
+          return escapeHtml(actionId);
+        }).join(' ／ ') +
+        '</p>' +
+        '<p>GMが次のターンを開始するまでお待ちください。</p>';
+
+      submitButton.textContent = '提出済み';
+      submitButton.className = 'done';
+      submitButton.disabled = true;
+    })
+    .withFailureHandler(function(error) {
+      hideLoading();
+
+      alert('施策の提出に失敗しました: ' + (error.message || error));
+
+      submitButton.disabled = false;
+      submitButton.textContent =
+        latestSubmitState && latestSubmitState.submitted
+          ? '施策を再提出する'
+          : '施策を提出する';
+      submitButton.className = 'ready';
+    })
+    .submitTurnAction({
+      groupId: currentGroupId,
+      actionIds: selectedActionIds
+    });
+}
+
+/**
+ * @summary プレイヤー画面の初期表示時に、対象グループの施策選択画面またはグループ選択画面を表示する
+ * @function initPlayerView
+ * @read APP_CONTEXT.groupId, currentGroupId, renderPlayerScreen(), loadCurrentTurn(), loadGroups(), startSubmitProgressAutoRefresh()
+ * @write プレイヤー画面の初期表示を開始し、対象グループがある場合は提出状況の自動更新も開始する
+ * @update 2026-07-06
+ */
+function initPlayerView() {
+  const groupList = document.getElementById('group-list');
+
+  currentGroupId = APP_CONTEXT.groupId || currentGroupId || '';
+
+  if (currentGroupId) {
+    renderPlayerScreen();
+    loadCurrentTurn();
+    startSubmitProgressAutoRefresh();
+    return;
+  }
+
+  if (groupList) {
+    loadGroups();
+  }
+}
+
+let submitProgressTimerId = null;
+
+/**
+ * @summary プレイヤー画面処理：提出状況の自動更新を開始する
+ * @function startSubmitProgressAutoRefresh
+ * @read submitProgressTimerId, loadPlayerSubmitProgress()
+ * @write submitProgressTimerIdを設定し、提出状況を定期更新する
+ * @update 2026-07-06
+ */
+function startSubmitProgressAutoRefresh() {
+  loadPlayerSubmitProgress();
+
+  if (submitProgressTimerId) {
+    return;
+  }
+
+  submitProgressTimerId = setInterval(function() {
+    loadPlayerSubmitProgress();
+  }, 15000);
+}
+
+/**
+ * @summary プレイヤー画面処理：現在ターンの匿名提出状況を読み込む
+ * @function loadPlayerSubmitProgress
+ * @read google.script.run.getPlayerSubmitProgress()
+ * @write submit-progress-area に提出状況を表示する
+ * @update 2026-07-06
+ */
+function loadPlayerSubmitProgress() {
+  const area = document.getElementById('submit-progress-area');
+
+  if (!area) {
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(function(progress) {
+      renderPlayerSubmitProgress(progress);
+    })
+    .withFailureHandler(function(error) {
+      area.innerHTML =
+        '<p class="error-text">提出状況を取得できませんでした。</p>';
+    })
+    .getPlayerSubmitProgress();
+}
+
+/**
+ * @summary プレイヤー画面処理：匿名提出状況を画面に描画する
+ * @function renderPlayerSubmitProgress
+ * @read progress, escapeHtml()
+ * @write submit-progress-area のinnerHTMLを更新する
+ * @update 2026-07-06
+ */
+function renderPlayerSubmitProgress(progress) {
+  const area = document.getElementById('submit-progress-area');
+
+  if (!area) {
+    return;
+  }
+
+  if (!progress || !progress.total) {
+    area.innerHTML =
+      '<p class="note">提出状況：ターン開始前です。</p>';
+    return;
+  }
+
+  area.innerHTML =
+    '<div class="submit-progress-title">提出状況</div>' +
+    '<div class="submit-progress-main">' +
+      progress.submitted + ' / ' + progress.total + '人 提出済み' +
+    '</div>' +
+    '<div class="submit-progress-bar">' +
+      '<div class="submit-progress-fill" style="width:' + progress.percent + '%;"></div>' +
+    '</div>' +
+    '<div class="submit-progress-message">' +
+      escapeHtml(progress.message || '') +
+    '</div>';
+}
+
+
+/**
+ * @summary プレイヤー画面処理：取得済みの市場環境データを画面に描画する
+ * @function renderScenarioFromState
+ * @read data, formatEffectText(), makeEnvironmentComment(), escapeHtml()
+ * @write scenario-info と environment-comment の表示を更新し、latestScenarioStateを保持する
+ * @update 2026-06-30
+ */
+function renderScenarioFromState(data) {
+  latestScenarioState = data;
+
+  document.getElementById('scenario-info').innerHTML =
+    '<h2>今回の市場環境</h2>' +
+
+    '<ul class="scenario-summary-list">' +
+      '<li>' +
+        '<b>市場：</b>' +
+        escapeHtml(data.trendId) + '｜' + escapeHtml(data.trendName) +
+        '<div class="scenario-effect">' +
+          '<b>影響：</b>' +
+          formatEffectText(data.trendEffect) +
+        '</div>' +
+      '</li>' +
+
+      '<li>' +
+        '<b>競合：</b>' +
+        escapeHtml(data.tcId) + '｜' + escapeHtml(data.tcName) +
+        '<div class="scenario-effect">' +
+          '<b>影響：</b>' +
+          formatEffectText(data.tcEffect) +
+        '</div>' +
+      '</li>' +
+    '</ul>';
+
+  const commentArea = document.getElementById('environment-comment');
+  if (commentArea) {
+    commentArea.textContent = makeEnvironmentComment(data);
+  }
+
+  if (latestPreviousResult) {
+    renderPreviousTurnResult(latestPreviousResult);
+  }
+}
+
+/**
+ * @summary プレイヤー画面内部処理：前ターン終了時点のKPI行を生成する
+ * @function buildKpiBaseRowHtml_
+ * @read result, formatNumber(), formatRate(), escapeHtml()
+ * @write 前ターン終了時点のKPI行HTMLを返す
+ * @update 2026-07-06
+ */
+function buildKpiBaseRowHtml_(result) {
+  return '<tr>' +
+    '<td>' + escapeHtml(result.turn) + '</td>' +
+    '<td>' + formatNumber(result.gi) + '</td>' +
+    '<td>' + formatNumber(result.ai) + '</td>' +
+    '<td>' + formatRate(result.bounce, 3) + '</td>' +
+    '<td>' + formatRate(result.browse, 2) + '</td>' +
+    '<td>' + formatRate(result.cvr, 4) + '</td>' +
+    '<td>' + formatNumber(result.aov) + '</td>' +
+    '<td>' + formatNumber(result.cpc) + '</td>' +
+  '</tr>';
+}
+
+/**
+ * @summary プレイヤー画面内部処理：市場・競合反映後のKPI行を生成する
+ * @function buildKpiEnvironmentRowHtml_
+ * @read result, deltas, currentTurn
+ * @write 市場・競合反映後のKPI行HTMLを返す
+ * @update 2026-07-06
+ */
+function buildKpiEnvironmentRowHtml_(result, deltas, currentTurn) {
+  deltas = deltas || {};
+
+  return '<tr class="kpi-environment-row">' +
+    '<td><b>' + escapeHtml(currentTurn || '-') + '</b></td>' +
+    buildKpiEnvironmentCell_(result.gi, deltas.gi, 0) +
+    buildKpiEnvironmentCell_(result.ai, deltas.ai, 0) +
+    buildKpiEnvironmentCell_(result.bounce, deltas.bounce, 3) +
+    buildKpiEnvironmentCell_(result.browse, deltas.browse, 2) +
+    buildKpiEnvironmentCell_(result.cvr, deltas.cvr, 4) +
+    buildKpiEnvironmentCell_(result.aov, deltas.aov, 0) +
+    buildKpiEnvironmentCell_(result.cpc, deltas.cpc, 0) +
+  '</tr>';
+}
+
+/**
+ * @summary プレイヤー画面内部処理：市場・競合反映後のKPIセルを生成する
+ * @function buildKpiEnvironmentCell_
+ * @read baseValue, deltaValue, digit
+ * @write 変化がある場合は強調クラス付きのtd文字列を返す
+ * @update 2026-07-06
+ */
+function buildKpiEnvironmentCell_(baseValue, deltaValue, digit) {
+  const base = Number(baseValue || 0);
+  const delta = Number(deltaValue || 0);
+  const after = base + delta;
+  const changed = delta !== 0;
+
+  return '<td' + (changed ? ' class="kpi-changed" style="background:#fff3cd;"' : '') + '>' +
+    (changed ? '<b>' : '') +
+    escapeHtml(formatKpiImpactValue_(after, digit)) +
+    (changed ? '</b>' : '') +
+  '</td>';
+}
+
+/**
+ * @summary プレイヤー画面内部処理：市場・競合の影響テキストからKPI変化量を抽出する
+ * @function parseKpiEffectText_
+ * @read text
+ * @write KPI別の変化量オブジェクトを返す
+ * @update 2026-07-06
+ */
+function parseKpiEffectText_(text) {
+  const result = {
+    gi: 0,
+    ai: 0,
+    bounce: 0,
+    browse: 0,
+    cvr: 0,
+    aov: 0,
+    cpc: 0
+  };
+
+  if (!text) {
+    return result;
+  }
+
+  const source = String(text);
+  const pattern = /(GI|AI|BO|BR|CVR|AOV|CPC)\s*([+-]?\d+(?:\.\d+)?)/gi;
+  let match;
+
+  while ((match = pattern.exec(source)) !== null) {
+    const key = String(match[1] || '').toUpperCase();
+    const value = Number(match[2] || 0);
+
+    if (isNaN(value)) {
+      continue;
+    }
+
+    if (key === 'GI') result.gi += value;
+    if (key === 'AI') result.ai += value;
+    if (key === 'BO') result.bounce += value;
+    if (key === 'BR') result.browse += value;
+    if (key === 'CVR') result.cvr += value;
+    if (key === 'AOV') result.aov += value;
+    if (key === 'CPC') result.cpc += value;
+  }
+
+  return result;
+}
+
+/**
+ * @summary プレイヤー画面内部処理：複数のKPI変化量を合算する
+ * @function mergeKpiDeltas_
+ * @read deltaList
+ * @write 合算後のKPI変化量を返す
+ * @update 2026-07-06
+ */
+function mergeKpiDeltas_(deltaList) {
+  const merged = {
+    gi: 0,
+    ai: 0,
+    bounce: 0,
+    browse: 0,
+    cvr: 0,
+    aov: 0,
+    cpc: 0
+  };
+
+  (deltaList || []).forEach(function(delta) {
+    Object.keys(merged).forEach(function(key) {
+      merged[key] += Number((delta && delta[key]) || 0);
+    });
+  });
+
+  return merged;
+}
+
+/**
+ * @summary プレイヤー画面内部処理：KPI値を表示用に整形する
+ * @function formatKpiImpactValue_
+ * @read value, digit
+ * @write 指定桁数の表示文字列を返す
+ * @update 2026-07-06
+ */
+function formatKpiImpactValue_(value, digit) {
+  const number = Number(value || 0);
+
+  if (digit > 0) {
+    return number.toFixed(digit);
+  }
+
+  return Math.round(number).toLocaleString();
+}
+
+/**
+ * @summary プレイヤー画面処理：取得済みの施策選択状態を画面に反映する
+ * @function renderActionPageState
+ * @read data, normalizeActionIdsFromState(), renderActions(), markSelectedActions(), updateActionSelectionStatus()
+ * @write 提出状態・使用済み施策・施策一覧・提出ボタン状態を更新する
+ * @update 2026-06-30
+ */
+function renderActionPageState(data) {
+  data = data || {};
+
+  const state = data.submitState || {};
+  const usedIds = data.usedActionIds || [];
+  const actions = data.actions || [];
+
+  latestSubmitState = state;
+
+  const submitButton = document.getElementById('submit-action-button');
+  const message = document.getElementById('submit-message');
+
+  submitButton.style.display = '';
+
+  const submittedActionIds = normalizeActionIdsFromState(state);
+
+  if (state && state.submitted) {
+    selectedActionIds = submittedActionIds.slice(0, REQUIRED_ACTION_COUNT);
+
+    message.innerHTML =
+      '<p>提出済みの施策：</p>' +
+      '<ul>' +
+        selectedActionIds.map(function(actionId) {
+          return '<li>' + escapeHtml(actionId) + '</li>';
+        }).join('') +
+      '</ul>' +
+      '<p>変更する場合は、未使用の施策を2つ選んで再提出してください。</p>';
+
+    submitButton.textContent = '施策を再提出する';
+    submitButton.disabled = false;
+    submitButton.className = 'ready';
+
+  } else {
+    selectedActionIds = [];
+
+    message.innerHTML = '';
+    submitButton.textContent = '施策を提出する';
+    submitButton.disabled = true;
+    submitButton.className = '';
+  }
+
+  const submittedMap = {};
+
+  selectedActionIds.forEach(function(actionId) {
+    submittedMap[String(actionId || '').trim()] = true;
+  });
+
+  usedActionIds = usedIds.filter(function(actionId) {
+    const id = String(actionId || '').trim();
+    return !submittedMap[id];
+  });
+
+  renderActions(actions);
+  markSelectedActions(selectedActionIds);
+  updateActionSelectionStatus();
+}
+</script>

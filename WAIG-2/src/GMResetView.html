@@ -1,0 +1,202 @@
+  <h1>初期化・リセット</h1>
+
+  <div class="section">
+    <p>
+      この画面では、ゲーム開始前の初期化や、テスト実行後のリセット操作を行います。
+    </p>
+    <p>
+      ゲーム中に使用する進行操作は、GM画面の「進行管理」から行ってください。
+    </p>
+  </div>
+
+  <div class="section danger-section">
+    <h2>注意</h2>
+    <p>
+      この画面の操作は、プレイヤー登録情報、プレイヤー初期設定、ターンログなどに影響します。
+      本番中は原則として使用しないでください。
+    </p>
+  </div>
+
+  <div class="section">
+    <h2>事前準備の初期化</h2>
+
+    <p>
+      プレイヤー登録やプレイヤー初期設定をやり直す場合に使用します。
+    </p>
+
+    <div class="button-area">
+      <button type="button" class="danger-button" onclick="handleResetMemberLog()">
+        プレイヤー登録をクリア
+      </button>
+
+      <button type="button" class="danger-button" onclick="handleResetGroupSetup()">
+        プレイヤー初期設定をクリア
+      </button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>ゲームログのリセット</h2>
+
+    <p>
+      テストプレイ後や、本番開始前にターンログを初期状態に戻す場合に使用します。
+    </p>
+
+    <div class="button-area">
+      <button type="button" class="danger-button" onclick="handleResetTurnLog()">
+        ターンログをリセット
+      </button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>確認メッセージ</h2>
+    <div id="message" class="message-area">
+      操作結果はここに表示されます。
+    </div>
+  </div>
+
+  <script>
+  /**
+ * @summary GM画面のメッセージ表示エリアに任意のメッセージを表示する
+ * @function setMessage
+ * @read message, message要素
+ * @write message要素のtextContentを更新する
+ * @update 2026-06-30
+ */
+    function setMessage(message) {
+      const el = document.getElementById('message');
+      if (el) {
+        el.textContent = message;
+      }
+    }
+
+/**
+ * @summary GM画面で発生したエラー内容をメッセージ表示用に整形して表示する
+ * @function setErrorMessage
+ * @read error, setMessage()
+ * @write message要素にエラーメッセージを表示する
+ * @update 2026-06-30
+ */
+    function setErrorMessage(error) {
+      const message = error && error.message ? error.message : error;
+      setMessage('エラー：' + message);
+    }
+
+/**
+ * @summary GM画面の危険操作実行前に確認ダイアログを表示する
+ * @function confirmDanger
+ * @read message
+ * @write ユーザーが確認した場合はtrue、キャンセルした場合はfalseを返す
+ * @update 2026-06-30
+ */
+    function confirmDanger(message) {
+      return confirm(
+        message + '\n\n' +
+        'この操作はゲームデータに影響します。\n' +
+        '実行してよろしいですか？'
+      );
+    }
+
+/**
+ * @summary GM画面から実行し、確認後にプレイヤー登録ログをクリアする
+ * @function handleResetMemberLog
+ * @read confirmDanger(), showLoading(), google.script.run.resetMemberLog()
+ * @write member_logのクリア処理を実行し、結果メッセージを表示する
+ * @update 2026-06-30
+ */
+    function handleResetMemberLog() {
+      if (!confirmDanger('プレイヤー登録をすべてクリアします。')) {
+        return;
+      }
+
+      showLoading();
+      setMessage('プレイヤー登録をクリアしています...');
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideLoading();
+
+          const clearedRows = result && result.clearedRows !== undefined
+            ? result.clearedRows
+            : '-';
+
+          setMessage(
+            'プレイヤー登録をクリアしました。クリア行数：' + clearedRows
+          );
+        })
+        .withFailureHandler(function(error) {
+          hideLoading();
+          setErrorMessage(error);
+        })
+        .resetMemberLog();
+    }
+
+/**
+ * @summary GM画面から実行し、確認後にプレイヤー初期設定ログをクリアする
+ * @function handleResetGroupSetup
+ * @read confirmDanger(), showLoading(), google.script.run.resetGroupSetup()
+ * @write group_setupのクリア処理を実行し、結果メッセージを表示する
+ * @update 2026-06-30
+ */
+    function handleResetGroupSetup() {
+      if (!confirmDanger('プレイヤー初期設定をすべてクリアします。')) {
+        return;
+      }
+
+      showLoading();
+      setMessage('プレイヤー初期設定をクリアしています...');
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideLoading();
+
+          const clearedRows = result && result.clearedRows !== undefined
+            ? result.clearedRows
+            : '-';
+
+          setMessage(
+            'プレイヤー初期設定をクリアしました。クリア行数：' + clearedRows
+          );
+        })
+        .withFailureHandler(function(error) {
+          hideLoading();
+          setErrorMessage(error);
+        })
+        .resetGroupSetup();
+    }
+
+/**
+ * @summary GM画面から実行し、確認後にターンログをリセットする
+ * @function handleResetTurnLog
+ * @read confirmDanger(), showLoading(), google.script.run.resetTurnLog()
+ * @write turn_logのリセット処理を実行し、結果メッセージを表示する
+ * @update 2026-06-30
+ */
+    function handleResetTurnLog() {
+      if (!confirmDanger('ターンログをリセットします。')) {
+        return;
+      }
+
+      showLoading();
+      setMessage('ターンログをリセットしています...');
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideLoading();
+
+          const clearedRows = result && result.clearedRows !== undefined
+            ? result.clearedRows
+            : '-';
+
+          setMessage(
+            'ターンログをリセットしました。クリア行数：' + clearedRows
+          );
+        })
+        .withFailureHandler(function(error) {
+          hideLoading();
+          setErrorMessage(error);
+        })
+        .resetTurnLog();
+    }
+  </script>

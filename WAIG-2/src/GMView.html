@@ -1,0 +1,1003 @@
+  <h1>進行管理</h1>
+
+  <section class="gm-section">
+    <h2>ゲーム進行</h2>
+    <p>
+      現在ターンの確認、ターン開始、ターン終了を行います。
+    </p>
+    <div id="action-area">
+      ゲーム進行状況を読み込み中...
+    </div>
+  </section>
+
+  <section class="gm-section">
+    <h2>施策提出状況</h2>
+    <p>
+      プレイヤーごとの施策提出状況を確認します。
+    </p>
+
+    <button type="button" onclick="loadSubmissionStatus(this)">
+      更新
+    </button>
+
+    <div id="status-area">
+      施策提出状況を読み込み中...
+    </div>
+  </section>
+
+  <section class="gm-section">
+    <h2>プレイヤー登録状況</h2>
+    <p>
+      プレイヤー登録と初期設定の状況を確認します。
+    </p>
+
+    <div id="member-group-status">
+      プレイヤー登録状況を読み込み中...
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>シナリオ設定</h2>
+
+    <div id="current-scenario-area">
+      現在のシナリオを確認中...
+    </div>
+
+    <p class="note">
+      ゲーム開始前に、使用するシナリオを選択してください。
+      ゲーム開始後の変更は、結果や振り返りに影響します。
+    </p>
+
+    <select id="scenario-select">
+      <option value="">シナリオを読み込み中...</option>
+    </select>
+
+    <div id="scenario-detail" class="note" style="margin-top:12px;"></div>
+
+    <button type="button" onclick="applyScenarioFromView(this)">
+      このシナリオを設定する
+    </button>
+
+    <div id="scenario-message"></div>
+  </section>
+
+  <section class="card">
+    <h2>AI分析プロンプト</h2>
+    <p>
+      最終成績、市場環境、施策履歴をもとに、AI分析用プロンプトを生成します。
+      ゲーム終了後の振り返り作成に使用します。
+    </p>
+
+    <button type="button" onclick="loadAiAnalysisPrompt(this)">
+      AI分析プロンプトを生成
+    </button>
+
+    <button type="button" onclick="copyAiAnalysisPrompt()">
+      コピー
+    </button>
+
+    <textarea
+      id="ai-analysis-prompt"
+      rows="18"
+      style="width:100%; margin-top:12px;"
+      placeholder="ここにAI分析プロンプトが表示されます"></textarea>
+  </section>
+
+  <section class="card">
+    <h2>WAIG博士の振り返り</h2>
+
+    <p>
+      AI分析結果を確認・修正したうえで、ここに貼り付けてください。
+      内容をプレビューし、問題なければ保存します。
+    </p>
+
+    <textarea
+      id="ai-feedback-text"
+      rows="18"
+      style="width:100%; margin-top:12px;"
+      placeholder="ここにAI分析結果を貼り付けます"></textarea>
+
+    <div style="margin-top:12px;">
+  <button type="button" onclick="previewAiFeedback()">
+    プレビュー
+  </button>
+  <button type="button" onclick="saveAiFeedbackFromView(this)">
+    保存
+  </button>
+</div>
+
+<div class="gm-feedback-control">
+  <h3>公開管理</h3>
+  <p class="note">
+    WAIG博士の振り返りは、公開中のものだけがプレイヤー画面に表示されます。
+  </p>
+
+  <div id="ai-feedback-status-area" class="note">
+    公開状態を確認中...
+  </div>
+
+  <div style="margin-top:12px;">
+    <button type="button" onclick="publishAiFeedbackFromView(this)">
+      講評を公開
+    </button>
+
+    <button type="button" onclick="hideAiFeedbackFromView(this)">
+      講評を非公開
+    </button>
+
+    <button type="button" onclick="archiveOldAiFeedbackFromView(this)">
+      過去の公開講評を整理
+    </button>
+  </div>
+
+  <div id="ai-feedback-control-message"></div>
+
+</div>
+
+  </section>
+
+  <section class="card">
+    <h2>プレビュー</h2>
+    <div id="ai-feedback-preview" class="feedback-preview">
+      まだプレビューはありません。
+    </div>
+  </section>
+
+  <script>
+  /**
+ * @summary GM画面共通処理：ボタンを処理中状態に変更する
+ * @function setButtonProcessing
+ * @read button, processingText
+ * @write ボタンを無効化し、表示文言とprocessingクラスを設定する
+ * @update 2026-06-30
+ */
+    function setButtonProcessing(button, processingText) {
+      if (!button) return;
+
+      if (!button.dataset.originalText) {
+        button.dataset.originalText = button.textContent;
+      }
+
+      button.disabled = true;
+      button.textContent = processingText || '処理中...';
+      button.classList.add('processing');
+    }
+
+/**
+ * @summary GM画面共通処理：処理中状態のボタンを元に戻す
+ * @function restoreButton
+ * @read button
+ * @write ボタンを有効化し、元の表示文言とクラス状態に戻す
+ * @update 2026-06-30
+ */
+    function restoreButton(button) {
+      if (!button) return;
+
+      button.disabled = false;
+      button.textContent = button.dataset.originalText || button.textContent;
+      button.classList.remove('processing');
+    }
+
+/**
+ * @summary GM画面から実行し、現在ターンの施策提出状況を取得する
+ * @function loadSubmissionStatus
+ * @read button, google.script.run.getSubmissionStatus(), setButtonProcessing(), showLoading()
+ * @write 提出状況エリアを更新し、取得結果を renderSubmissionStatus() に渡す
+ * @update 2026-06-30
+ */
+    function loadSubmissionStatus(button) {
+      setButtonProcessing(button, '更新中...');
+      showLoading();
+
+      google.script.run
+        .withSuccessHandler(function(status) {
+          hideLoading();
+          restoreButton(button);
+          renderSubmissionStatus(status);
+        })
+        .withFailureHandler(function(error) {
+          hideLoading();
+          restoreButton(button);
+
+          document.getElementById('status-area').innerHTML =
+            '<p style="color:red;">施策提出状況の取得に失敗しました。</p><pre>' +
+            (error.message || error) +
+            '</pre>';
+        })
+        .getSubmissionStatus();
+    }
+
+/**
+ * @summary GM画面処理：施策提出状況とターン進行操作ボタンを描画する
+ * @function renderSubmissionStatus
+ * @read status
+ * @write action-area と status-area のinnerHTMLを更新する
+ * @update 2026-07-06
+ */
+function renderSubmissionStatus(status) {
+  const statusList = status.groups;
+  const actionArea = document.getElementById('action-area');
+  const statusArea = document.getElementById('status-area');
+
+  if (!statusList || statusList.length === 0) {
+    actionArea.innerHTML = '';
+    statusArea.innerHTML = '<p>登録済みのプレイヤーがありません。</p>';
+    return;
+  }
+
+  let actionHtml = '';
+  actionHtml += '<p><strong>現在ターン：' + status.currentTurn + '</strong></p>';
+
+  if (status.gameEnded) {
+    actionHtml += '<p class="danger-text">ゲーム終了</p>';
+    actionHtml += '<p>結果画面で最終結果を確認してください。</p>';
+  } else if (status.turnEnded) {
+    actionHtml += '<p class="info-text">このターンは終了済みです。</p>';
+    actionHtml += '<button type="button" onclick="startTurn(this)">ターン' +
+      (Number(status.currentTurn) + 1) +
+      '開始</button>';
+  } else if (status.currentTurn === 0) {
+    actionHtml += '<button type="button" onclick="startTurn(this)">ターン1開始</button>';
+  } else if (status.allSubmitted) {
+    actionHtml += '<button type="button" onclick="endTurn(this)">ターン終了</button>';
+  } else {
+    actionHtml += '<p>プレイヤーの施策提出を待っています。</p>';
+  }
+
+  let statusHtml = '';
+  statusHtml += '<table>';
+  statusHtml += '<tr>';
+  statusHtml += '<th>プレイヤー</th>';
+  statusHtml += '<th>施策提出内容</th>';
+  statusHtml += '<th>GM処理</th>';
+  statusHtml += '</tr>';
+
+  statusList.forEach(function(row) {
+    statusHtml += '<tr>';
+
+    statusHtml += '<td>' +
+      escapeHtml(row.displayName || row.groupId || '') +
+      '</td>';
+
+    if (row.submitted) {
+      statusHtml += '<td class="done">';
+
+      if (row.action1) {
+        statusHtml += escapeHtml(row.action1);
+      }
+
+      if (row.action2) {
+        statusHtml += '<br>' + escapeHtml(row.action2);
+      }
+
+      statusHtml += '</td>';
+
+      statusHtml += '<td class="done">提出済み</td>';
+    } else {
+      statusHtml += '<td class="not-yet">未提出</td>';
+
+      if (Number(status.currentTurn) > 0 && !status.turnEnded && !status.gameEnded) {
+        statusHtml += '<td>';
+        statusHtml += '<button type="button" class="secondary-button" onclick="submitPassByGm(\'' +
+          escapeHtml(row.groupId || '') +
+          '\', this)">一手パスで処理</button>';
+        statusHtml += '</td>';
+      } else {
+        statusHtml += '<td>-</td>';
+      }
+    }
+
+    statusHtml += '</tr>';
+  });
+
+  statusHtml += '</table>';
+
+  actionArea.innerHTML = actionHtml;
+  statusArea.innerHTML = statusHtml;
+}
+    
+/**
+ * @summary GM画面から実行し、確認後に現在ターンを終了する
+ * @function endTurn
+ * @read button, google.script.run.endCurrentTurn(), loadSubmissionStatus()
+ * @write turn_logにターン終了を記録し、提出状況表示を再読み込みする
+ * @update 2026-06-30
+ */
+    function endTurn(button) {
+      if (!confirm('現在ターンを終了しますか？')) {
+        return;
+      }
+
+      setButtonProcessing(button, '終了中...');
+      showLoading();
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideLoading();
+          restoreButton(button);
+          loadSubmissionStatus();
+        })
+        .withFailureHandler(function(error) {
+          hideLoading();
+          restoreButton(button);
+
+          alert(
+            'ターン終了エラー: ' +
+            (error.message || error)
+          );
+        })
+        .endCurrentTurn();
+    }
+
+/**
+ * @summary GM画面から実行し、確認後に次ターンを開始する
+ * @function startTurn
+ * @read button, google.script.run.startNextTurn(), loadSubmissionStatus()
+ * @write turn_logにターン開始を記録し、提出状況表示を再読み込みする
+ * @update 2026-06-30
+ */
+    function startTurn(button) {
+      if (!confirm('次のターンを開始しますか？')) {
+        return;
+      }
+
+      setButtonProcessing(button, '開始中...');
+      showLoading();
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideLoading();
+          restoreButton(button);
+          loadSubmissionStatus();
+        })
+        .withFailureHandler(function(error) {
+          hideLoading();
+          restoreButton(button);
+
+          alert(
+            'ターン開始エラー: ' +
+            (error.message || error)
+          );
+        })
+        .startNextTurn();
+    }
+
+/**
+ * @summary GM画面から参照し、プレイヤー登録状況と初期設定状況を取得して表示する
+ * @function loadMemberGroupStatus
+ * @read google.script.run.getMemberGroupStatus()
+ * @write member-group-status 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+    function loadMemberGroupStatus() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          const area = document.getElementById('member-group-status');
+
+          if (!area) return;
+
+          if (!data || data.length === 0) {
+            area.innerHTML = '<p>まだプレイヤー登録がありません。</p>';
+            return;
+          }
+
+          let html = '<table>';
+          html += '<tr><th>プレイヤー枠</th><th>プレイヤー名</th><th>登録状況</th><th>初期設定状況</th></tr>';
+
+          data.forEach(function(row) {
+            const setupClass = row.setupStatus === '完了' ? 'ok' : 'ng';
+
+            html += '<tr>';
+            html += '<td>' + escapeHtml(row.groupId || '') + '</td>';
+            html += '<td>' + escapeHtml(row.displayName || '') + '</td>';
+            html += '<td>' + escapeHtml(row.memberStatus || '') + '</td>';
+            html += '<td class="' + setupClass + '">' + escapeHtml(row.setupStatus || '') + '</td>';
+            html += '</tr>';
+          });
+
+          html += '</table>';
+          area.innerHTML = html;
+        })
+        .withFailureHandler(function(error) {
+          document.getElementById('member-group-status').innerHTML =
+            '<p style="color:red;">プレイヤー登録状況の取得に失敗しました。</p><pre>' +
+            (error.message || error) +
+            '</pre>';
+        })
+        .getMemberGroupStatus();
+    }
+
+/**
+ * @summary GM画面処理：未提出プレイヤーをA00+A00の一手パスとして処理する
+ * @function submitPassByGm
+ * @read groupId
+ * @write turn_log に GM_ACTION / A00 / A00 を記録し、提出状況を再読み込みする
+ * @update 2026-07-06
+ */
+function submitPassByGm(groupId, button) {
+  const targetGroupId = String(groupId || '').trim();
+
+  if (!targetGroupId) {
+    alert('対象プレイヤーが指定されていません。');
+    return;
+  }
+
+  const ok = confirm(
+    targetGroupId + ' を A00｜パス + A00｜パス として処理します。\n\n' +
+    'このプレイヤーは、このターンで施策を実行しなかった扱いになります。\n' +
+    '実行しますか？'
+  );
+
+  if (!ok) {
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = '処理中...';
+  }
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      alert('一手パスで処理しました。');
+      loadSubmissionStatus();
+    })
+    .withFailureHandler(function(error) {
+      alert('一手パス処理に失敗しました。\n' + getErrorMessage(error));
+
+      if (button) {
+        button.disabled = false;
+        button.textContent = '一手パスで処理';
+      }
+    })
+    .submitPassByGm(targetGroupId);
+}
+
+/**
+ * @summary GM画面から実行し、AI分析用プロンプトを生成してテキストエリアに表示する
+ * @function loadAiAnalysisPrompt
+ * @read button, google.script.run.getAiAnalysisPrompt()
+ * @write ai-analysis-prompt 要素のvalueを更新する
+ * @update 2026-06-30
+ */
+    function loadAiAnalysisPrompt(button) {
+      const area = document.getElementById('ai-analysis-prompt');
+
+      setButtonProcessing(button, '生成中...');
+      showLoading();
+
+      area.value = '生成中です。少しお待ちください...';
+
+      google.script.run
+        .withSuccessHandler(function(prompt) {
+          hideLoading();
+          restoreButton(button);
+          area.value = prompt;
+        })
+        .withFailureHandler(function(error) {
+          hideLoading();
+          restoreButton(button);
+
+          area.value =
+            'AI分析プロンプト生成に失敗しました。\n\n' +
+            (error.message || error);
+        })
+        .getAiAnalysisPrompt();
+    }
+
+/**
+ * @summary GM画面から実行し、AI分析用プロンプトをクリップボードへコピーする
+ * @function copyAiAnalysisPrompt
+ * @read ai-analysis-prompt 要素
+ * @write 選択中のプロンプト本文をクリップボードへコピーする
+ * @update 2026-06-30
+ */
+    function copyAiAnalysisPrompt() {
+      const area = document.getElementById('ai-analysis-prompt');
+
+      if (!area.value) {
+        alert('コピーするプロンプトがありません。');
+        return;
+      }
+
+      area.select();
+      document.execCommand('copy');
+
+      alert('AI分析プロンプトをコピーしました。');
+    }
+
+/**
+ * @summary GM画面から実行し、入力されたAI講評本文をプレビュー表示する
+ * @function previewAiFeedback
+ * @read ai-feedback-text, ai-feedback-preview, formatAiFeedbackPreview()
+ * @write ai-feedback-preview 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+    function previewAiFeedback() {
+      const textArea = document.getElementById('ai-feedback-text');
+      const preview = document.getElementById('ai-feedback-preview');
+
+      if (!textArea || !preview) {
+        alert('プレビュー欄が見つかりません。');
+        return;
+      }
+
+      const text = textArea.value.trim();
+
+      if (!text) {
+        preview.innerHTML = '<p>プレビューする内容がありません。</p>';
+        return;
+      }
+
+      preview.innerHTML = formatAiFeedbackPreview(text);
+    }
+
+/**
+ * @summary GM画面内部処理：AI講評本文の簡易Markdownをプレビュー用HTMLに変換する
+ * @function formatAiFeedbackPreview
+ * @read text, escapeHtml()
+ * @write 見出し・太字・改行を反映したHTML文字列を返す
+ * @update 2026-06-30
+ */
+    function formatAiFeedbackPreview(text) {
+      let html = escapeHtml(text);
+
+      // Markdown風の見出しを簡易HTMLに変換
+      html = html.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+
+      // 太字 **text**
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+      // 改行
+      html = html.replace(/\n/g, '<br>');
+
+      return html;
+    }
+    
+/**
+ * @summary GM画面内部処理：HTML表示用に特殊文字をエスケープする
+ * @function escapeHtml
+ * @read text
+ * @write HTMLエスケープ済み文字列を返す
+ * @update 2026-06-30
+ */
+    function escapeHtml(text) {
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+/**
+ * @summary GM画面から実行し、入力されたAI講評本文を保存する
+ * @function saveAiFeedbackFromView
+ * @read button, ai-feedback-text, google.script.run.saveAiFeedback()
+ * @write ai_feedbackに講評本文を保存し、保存結果を通知する
+ * @update 2026-06-30
+ */
+    function saveAiFeedbackFromView(button) {
+      const textArea = document.getElementById('ai-feedback-text');
+      const text = textArea ? textArea.value.trim() : '';
+
+      if (!text) {
+        alert('保存する振り返り本文がありません。');
+        return;
+      }
+
+      if (!confirm('この内容をWAIG博士の振り返りとして保存しますか？')) {
+        return;
+      }
+
+      setButtonProcessing(button, '保存中...');
+      showLoading();
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideLoading();
+          restoreButton(button);
+
+          alert(result.message || '保存しました。');
+        })
+        .withFailureHandler(function(error) {
+          hideLoading();
+          restoreButton(button);
+
+          alert(
+            '保存に失敗しました。\n\n' +
+            (error.message || error)
+          );
+        })
+        .saveAiFeedback(text);
+    }
+
+/**
+ * @summary GM画面から参照し、現在のAI講評の保存状態と公開状態を取得する
+ * @function loadAiFeedbackStatus
+ * @read google.script.run.getAiFeedbackStatus()
+ * @write ai-feedback-status-area に確認中表示または取得結果を表示する
+ * @update 2026-06-30
+ */
+function loadAiFeedbackStatus() {
+  const area = document.getElementById('ai-feedback-status-area');
+
+  if (area) {
+    area.innerHTML = '公開状態を確認中...';
+  }
+
+  google.script.run
+    .withSuccessHandler(function(status) {
+      renderAiFeedbackStatus(status);
+    })
+    .withFailureHandler(function(error) {
+      if (area) {
+        area.innerHTML =
+          '<p style="color:red;">公開状態の取得に失敗しました。</p><pre>' +
+          escapeHtml(error.message || error) +
+          '</pre>';
+      }
+    })
+    .getAiFeedbackStatus();
+}
+
+/**
+ * @summary GM画面処理：AI講評の公開状態・メタ情報・本文プレビューを描画する
+ * @function renderAiFeedbackStatus
+ * @read status
+ * @write ai-feedback-status-area 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+function renderAiFeedbackStatus(status) {
+  const area = document.getElementById('ai-feedback-status-area');
+
+  if (!area) return;
+
+  if (!status || !status.exists) {
+    area.innerHTML =
+      '<p><span class="feedback-status-badge feedback-status-none">未作成</span></p>' +
+      '<p>まだWAIG博士の振り返りは保存されていません。</p>';
+    return;
+  }
+
+  const statusValue = status.status || '';
+
+  let badgeClass = 'feedback-status-hidden';
+  let label = statusValue || '不明';
+
+  if (statusValue === 'published') {
+    badgeClass = 'feedback-status-published';
+    label = '公開中';
+  } else if (statusValue === 'hidden') {
+    badgeClass = 'feedback-status-hidden';
+    label = '非公開';
+  } else if (statusValue === 'archived') {
+    badgeClass = 'feedback-status-archived';
+    label = '過去分';
+  }
+
+  area.innerHTML =
+  '<p><span class="feedback-status-badge ' + badgeClass + '">' +
+  escapeHtml(label) +
+  '</span></p>' +
+  '<p>' +
+  'シナリオ：' + escapeHtml(status.scenarioId || '-') + '<br>' +
+  'Turn：' + escapeHtml(status.turn || '-') + '<br>' +
+  '種別：' + escapeHtml(status.feedbackType || '-') + '<br>' +
+  '更新者：' + escapeHtml(status.updatedBy || '-') + '<br>' +
+  '更新日時：' + escapeHtml(status.timestamp || '-') +
+  '</p>' +
+  '<div class="feedback-preview-small">' +
+  '<b>本文プレビュー：</b><br>' +
+  escapeHtml(status.feedbackPreview || '本文なし') +
+  '</div>';
+}
+
+/**
+ * @summary GM画面から実行し、最新のAI講評を公開状態に変更する
+ * @function publishAiFeedbackFromView
+ * @read button, google.script.run.publishLatestAiFeedback()
+ * @write ai_feedbackの最新講評をpublishedに変更し、公開状態表示を再読み込みする
+ * @update 2026-06-30
+ */
+function publishAiFeedbackFromView(button) {
+  if (!confirm('最新のWAIG博士の振り返りを公開しますか？')) {
+    return;
+  }
+
+  setButtonProcessing(button, '公開中...');
+  showLoading();
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      hideLoading();
+      restoreButton(button);
+
+      showAiFeedbackControlMessage(result.message || '講評を公開しました。', false);
+      loadAiFeedbackStatus();
+    })
+    .withFailureHandler(function(error) {
+      hideLoading();
+      restoreButton(button);
+
+      showAiFeedbackControlMessage(
+        '公開に失敗しました。\n' + (error.message || error),
+        true
+      );
+    })
+    .publishLatestAiFeedback();
+}
+
+/**
+ * @summary GM画面から実行し、最新のAI講評を非公開状態に変更する
+ * @function hideAiFeedbackFromView
+ * @read button, google.script.run.hideLatestAiFeedback()
+ * @write ai_feedbackの最新講評をhiddenに変更し、公開状態表示を再読み込みする
+ * @update 2026-06-30
+ */
+function hideAiFeedbackFromView(button) {
+  if (!confirm('WAIG博士の振り返りを非公開にしますか？')) {
+    return;
+  }
+
+  setButtonProcessing(button, '非公開中...');
+  showLoading();
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      hideLoading();
+      restoreButton(button);
+
+      showAiFeedbackControlMessage(result.message || '講評を非公開にしました。', false);
+      loadAiFeedbackStatus();
+    })
+    .withFailureHandler(function(error) {
+      hideLoading();
+      restoreButton(button);
+
+      showAiFeedbackControlMessage(
+        '非公開に失敗しました。\n' + (error.message || error),
+        true
+      );
+    })
+    .hideLatestAiFeedback();
+}
+
+/**
+ * @summary GM画面から実行し、過去の公開済みAI講評をarchivedに整理する
+ * @function archiveOldAiFeedbackFromView
+ * @read button, google.script.run.archiveOldPublishedAiFeedback()
+ * @write 過去のpublished講評をarchivedに変更し、公開状態表示を再読み込みする
+ * @update 2026-06-30
+ */
+function archiveOldAiFeedbackFromView(button) {
+  if (!confirm(
+    '現在の最新講評を残し、過去の published 講評を archived に変更します。\n\n' +
+    'よろしいですか？'
+  )) {
+    return;
+  }
+
+  setButtonProcessing(button, '整理中...');
+  showLoading();
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      hideLoading();
+      restoreButton(button);
+
+      showAiFeedbackControlMessage(result.message || '過去の公開講評を整理しました。', false);
+      loadAiFeedbackStatus();
+    })
+    .withFailureHandler(function(error) {
+      hideLoading();
+      restoreButton(button);
+
+      showAiFeedbackControlMessage(
+        '整理に失敗しました。\n' + (error.message || error),
+        true
+      );
+    })
+    .archiveOldPublishedAiFeedback();
+}
+
+/**
+ * @summary GM画面処理：AI講評操作の結果メッセージを表示する
+ * @function showAiFeedbackControlMessage
+ * @read message, isError
+ * @write ai-feedback-control-message 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+  function showAiFeedbackControlMessage(message, isError) {
+    const area = document.getElementById('ai-feedback-control-message');
+
+    if (!area) return;
+
+    area.innerHTML =
+      '<p style="color:' + (isError ? 'red' : '#1a7f37') + '; font-weight:bold;">' +
+      escapeHtml(message) +
+      '</p>';
+  }
+
+
+    let latestScenarioOptions = [];
+
+    function loadScenarioOptions() {
+      google.script.run
+        .withSuccessHandler(function(scenarios) {
+          latestScenarioOptions = scenarios || [];
+          renderScenarioOptions(latestScenarioOptions);
+        })
+        .withFailureHandler(function(error) {
+          const area = document.getElementById('scenario-message');
+          if (area) {
+            area.innerHTML =
+              '<p style="color:red;">シナリオ一覧の取得に失敗しました。</p><pre>' +
+              (error.message || error) +
+              '</pre>';
+          }
+        })
+        .getScenarioOptions();
+    }
+
+/**
+ * @summary GM画面処理：シナリオ選択肢をセレクトボックスに描画する
+ * @function renderScenarioOptions
+ * @read scenarios, latestScenarioOptions
+ * @write scenario-select と current-scenario-area の表示を更新する
+ * @update 2026-06-30
+ */
+    function renderScenarioOptions(scenarios) {
+      const select = document.getElementById('scenario-select');
+      const currentArea = document.getElementById('current-scenario-area');
+
+      if (!select) return;
+
+      if (!scenarios || scenarios.length === 0) {
+        select.innerHTML =
+          '<option value="">利用できるシナリオがありません</option>';
+
+        if (currentArea) {
+          currentArea.innerHTML =
+            '<p>現在のシナリオ：未設定</p>';
+        }
+
+        return;
+      }
+
+      let html = '';
+      html += '<option value="">シナリオを選択してください</option>';
+
+      scenarios.forEach(function(scenario) {
+        html += '<option value="' + escapeHtml(scenario.scenarioId || '') + '">' +
+          escapeHtml(scenario.scenarioLabel || '') +
+          '</option>';
+      });
+
+      select.innerHTML = html;
+
+      if (currentArea) {
+        currentArea.innerHTML =
+          '<p>現在のシナリオ：確認中</p>';
+      }
+
+      select.onchange = function() {
+        renderScenarioDetail(select.value);
+      };
+
+      if (select.value) {
+        renderScenarioDetail(select.value);
+      }
+    }
+
+/**
+ * @summary GM画面処理：選択されたシナリオの詳細情報を表示する
+ * @function renderScenarioDetail
+ * @read scenarioId, latestScenarioOptions
+ * @write scenario-detail 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+    function renderScenarioDetail(scenarioId) {
+      const area = document.getElementById('scenario-detail');
+      if (!area) return;
+
+      const scenario = latestScenarioOptions.find(function(item) {
+        return item.scenarioId === scenarioId;
+      });
+
+      if (!scenario) {
+        area.innerHTML = '';
+        return;
+      }
+
+      area.innerHTML =
+        '<div style="text-align:left; background:#f7f7f7; border:1px solid #ddd; border-radius:8px; padding:12px;">' +
+          '<p><b>' + escapeHtml(scenario.scenarioName || '') + '</b></p>' +
+          '<p><b>難易度：</b>' + escapeHtml(scenario.difficulty || '-') + '</p>' +
+          '<p><b>意図：</b>' + escapeHtml(scenario.scenarioIntent || '-') + '</p>' +
+          '<p><b>用途：</b>' + escapeHtml(scenario.recommendedUse || '-') + '</p>' +
+        '</div>';
+    }
+
+/**
+ * @summary GM画面から実行し、選択されたシナリオを market_event_log に反映する
+ * @function applyScenarioFromView
+ * @read button, scenario-select, google.script.run.applyScenarioToMarketLog()
+ * @write market_event_logにシナリオを反映し、設定結果表示を更新する
+ * @update 2026-06-30
+ */
+    function applyScenarioFromView(button) {
+      const select = document.getElementById('scenario-select');
+      const scenarioId = select ? select.value : '';
+      const message = document.getElementById('scenario-message');
+
+      if (!scenarioId) {
+        alert('シナリオを選択してください。');
+        return;
+      }
+
+      if (!confirm(
+        'シナリオ ' + scenarioId + ' を設定します。\n\n' +
+        'Turn1〜Turn6 の市場環境が market_event_log に反映されます。\n' +
+        'ゲーム開始後に変更すると、結果や振り返りに影響します。\n\n' +
+        'よろしいですか？'
+      )) {
+        return;
+      }
+
+      setButtonProcessing(button, '設定中...');
+      showLoading();
+
+      if (message) {
+        message.innerHTML = '<p class="gm-processing-message">シナリオを設定中です...</p>';
+      }
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideLoading();
+          restoreButton(button);
+
+          if (message) {
+            message.innerHTML =
+              '<p class="success-text">' +
+              escapeHtml(result.message || 'シナリオを設定しました。') +
+              '</p>';
+          }
+
+          const currentArea = document.getElementById('current-scenario-area');
+          if (currentArea) {
+            currentArea.innerHTML =
+              '<p>現在のシナリオ：<b>' + escapeHtml(result.scenarioId || '') + '</b></p>' +
+              '<p>反映ターン数：' + escapeHtml(result.turnCount || '') + '</p>';
+          }
+        })
+        .withFailureHandler(function(error) {
+          hideLoading();
+          restoreButton(button);
+
+          if (message) {
+            message.innerHTML =
+              '<p style="color:red;">シナリオ設定に失敗しました。</p><pre>' +
+              (error.message || error) +
+              '</pre>';
+          }
+        })
+        .applyScenarioToMarketLog(scenarioId);
+    }
+
+/**
+ * @summary GM画面の初期表示時に、シナリオ・登録状況・提出状況・AI講評状態を読み込む
+ * @function initGMView
+ * @read loadScenarioOptions(), loadMemberGroupStatus(), loadSubmissionStatus(), loadAiFeedbackStatus()
+ * @write GM画面の各表示エリアの読み込みを開始する
+ * @update 2026-06-30
+ */
+    function initGMView() {
+      loadScenarioOptions();
+      loadMemberGroupStatus();
+      loadSubmissionStatus();
+      loadAiFeedbackStatus();
+    };
+  </script>

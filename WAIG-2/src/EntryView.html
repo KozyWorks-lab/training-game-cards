@@ -1,0 +1,251 @@
+<h1>初期設定</h1>
+
+<section class="card">
+  <p>
+    ゲーム開始前に、プレイヤーの案件・ミッション・スキル強化カードを選びます。
+  </p>
+  <p>
+    この設定はゲーム中の結果に影響します。内容を確認してから保存してください。
+  </p>
+
+  <select id="entry-group-id">
+    <option value="">プレイヤー枠を選択</option>
+  </select>
+
+  <select id="entry-challenge-id" onchange="loadMissionsByChallenge()">
+    <option value="">案件カードを選択</option>
+  </select>
+
+  <select id="entry-mission-id">
+    <option value="">ミッションカードを選択</option>
+  </select>
+
+  <select id="entry-skill-id">
+    <option value="">スキル強化カードを選択</option>
+  </select>
+
+  <button type="button" onclick="submitEntry()">
+    初期設定を保存する
+  </button>
+
+  <div id="entry-message"></div>
+</section>
+
+<script>
+/**
+ * @summary 初期設定画面の初期表示時に、プレイヤー枠・案件・ミッション・スキルの選択肢を読み込む
+ * @function initEntryView
+ * @read loadEntryOptions()
+ * @write 初期設定画面の選択肢読み込みを開始する
+ * @update 2026-06-30
+ */
+  function initEntryView() {
+    loadEntryOptions();
+  }
+
+/**
+ * @summary クライアント処理：サーバーから初期設定画面の選択肢データを取得する
+ * @function loadEntryOptions
+ * @read google.script.run.getEntryOptions()
+ * @write 取得成功時は renderEntryOptions() を実行し、失敗時はエラーを通知する
+ * @update 2026-06-30
+ */
+  function loadEntryOptions() {
+    google.script.run
+      .withSuccessHandler(renderEntryOptions)
+      .withFailureHandler(function(error) {
+        alert(
+          '初期設定データの取得に失敗しました: ' +
+          (error.message || error)
+        );
+      })
+      .getEntryOptions();
+  }
+
+/**
+ * @summary クライアント処理：初期設定画面の各セレクトボックスに選択肢を描画する
+ * @function renderEntryOptions
+ * @read data, clearSelect(), fillEntryGroupSelect(), fillSelect()
+ * @write プレイヤー枠・案件・ミッション・スキルのセレクトボックスを更新する
+ * @update 2026-06-30
+ */
+  function renderEntryOptions(data) {
+    clearSelect('entry-group-id', 'プレイヤー枠を選択');
+    clearSelect('entry-challenge-id', '案件カードを選択');
+    clearSelect('entry-mission-id', 'ミッションカードを選択');
+    clearSelect('entry-skill-id', 'スキル強化カードを選択');
+
+    fillEntryGroupSelect(data.groups || []);
+    fillSelect('entry-challenge-id', data.challenges || []);
+    fillSelect('entry-mission-id', data.missions || []);
+    fillSelect('entry-skill-id', data.skills || []);
+  }
+
+/**
+ * @summary クライアント内部処理：初期設定可能なプレイヤー枠をセレクトボックスに追加する
+ * @function fillEntryGroupSelect
+ * @read groups, entry-group-id 要素
+ * @write entry-group-id の option 要素を追加する
+ * @update 2026-06-30
+ */
+  function fillEntryGroupSelect(groups) {
+    const select = document.getElementById('entry-group-id');
+
+    if (!groups || groups.length === 0) {
+      select.innerHTML =
+        '<option value="">初期設定できるプレイヤー枠がありません</option>';
+      return;
+    }
+
+    groups.forEach(function(group) {
+      const el = document.createElement('option');
+
+      el.value = group.groupId || group.id;
+
+      el.textContent =
+        group.displayName ||
+        group.name ||
+        group.groupId ||
+        group.id;
+
+      select.appendChild(el);
+    });
+  }
+
+/**
+ * @summary クライアント内部処理：指定されたセレクトボックスに選択肢を追加する
+ * @function fillSelect
+ * @read id, options
+ * @write 指定IDの select 要素に option 要素を追加する
+ * @update 2026-06-30
+ */
+  function fillSelect(id, options) {
+    const select = document.getElementById(id);
+
+    options.forEach(function(option) {
+      const el = document.createElement('option');
+
+      el.value = option.id;
+
+      if (option.id === option.name) {
+        el.textContent = option.id;
+      } else {
+        el.textContent =
+          option.id +
+          ' | ' +
+          option.name;
+      }
+
+      select.appendChild(el);
+    });
+  }
+
+/**
+ * @summary クライアント内部処理：指定されたセレクトボックスを初期化し、プレースホルダーを設定する
+ * @function clearSelect
+ * @read id, placeholder
+ * @write 指定IDの select 要素を初期化し、先頭 option を追加する
+ * @update 2026-06-30
+ */
+  function clearSelect(id, placeholder) {
+    const select = document.getElementById(id);
+
+    select.innerHTML = '';
+
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = placeholder;
+
+    select.appendChild(option);
+  }
+
+/**
+ * @summary クライアント処理：選択された案件カードに対応するミッションカード一覧を取得して再表示する
+ * @function loadMissionsByChallenge
+ * @read entry-challenge-id, google.script.run.getMissionOptionsByChallenge(), showLoading(), hideLoading()
+ * @write entry-mission-id の選択肢を更新する
+ * @update 2026-06-30
+ */
+  function loadMissionsByChallenge() {
+    const challengeId =
+      document.getElementById('entry-challenge-id').value;
+
+    clearSelect('entry-mission-id', 'ミッションカードを選択');
+
+    if (!challengeId) {
+      return;
+    }
+
+    showLoading();
+
+    google.script.run
+      .withSuccessHandler(function(missions) {
+        hideLoading();
+        fillSelect('entry-mission-id', missions || []);
+      })
+      .withFailureHandler(function(error) {
+        hideLoading();
+
+        alert(
+          'ミッションカードの取得に失敗しました: ' +
+          (error.message || error)
+        );
+      })
+      .getMissionOptionsByChallenge(challengeId);
+  }
+
+/**
+ * @summary 初期設定画面から実行し、選択されたプレイヤー枠・案件・ミッション・スキルを保存する
+ * @function submitEntry
+ * @read entry-group-id, entry-challenge-id, entry-mission-id, entry-skill-id, google.script.run.saveEntry()
+ * @write 初期設定を保存し、成功時は entry-message 要素に保存結果を表示する
+ * @update 2026-06-30
+ */
+  function submitEntry() {
+    const entry = {
+      groupId: document.getElementById('entry-group-id').value,
+      challengeId: document.getElementById('entry-challenge-id').value,
+      missionId: document.getElementById('entry-mission-id').value,
+      skillId: document.getElementById('entry-skill-id').value
+    };
+
+    if (
+      !entry.groupId ||
+      !entry.challengeId ||
+      !entry.missionId ||
+      !entry.skillId
+    ) {
+      alert('プレイヤー枠、案件カード、ミッションカード、スキル強化カードをすべて選択してください。');
+      return;
+    }
+
+    showLoading();
+
+    google.script.run
+      .withSuccessHandler(function(result) {
+        hideLoading();
+
+        document.getElementById('entry-message').innerHTML =
+          '<p class="info-text">' +
+            '初期設定を保存しました。' +
+          '</p>' +
+          '<p>' +
+            'プレイヤー枠：<b>' +
+            escapeHtml(result.groupId) +
+            '</b>' +
+          '</p>' +
+          '<p><b>' +
+            'ゲーム開始後は、左メニューの「施策選択」へ進んでください。' +
+          '</b></p>';
+      })
+      .withFailureHandler(function(error) {
+        hideLoading();
+
+        alert(
+          '初期設定の保存に失敗しました: ' +
+          (error.message || error)
+        );
+      })
+      .saveEntry(entry);
+  }
+</script>

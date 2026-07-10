@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+
+    <meta charset="UTF-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    >
+
+    <?!= include('CommonStyle'); ?>
+    <?!= include('CommonUtil'); ?>
+
+    <style>
+      /* ==========================================
+       * WAIG-2 共通レイアウト
+       * ========================================== */
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: #f8f9fa;
+      }
+
+      .app-layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .app-sidebar {
+        position: relative;
+        width: 230px;
+        flex-shrink: 0;
+        background: #ffffff;
+        border-right: 1px solid #dddddd;
+        box-sizing: border-box;
+      }
+
+      .app-sidebar-inner {
+        position: sticky;
+        top: 0;
+        box-sizing: border-box;
+        max-height: 100vh;
+        padding: 20px 14px;
+        overflow-y: auto;
+      }
+
+      .app-brand {
+        padding: 4px 10px 16px;
+        border-bottom: 1px solid #dddddd;
+        margin-bottom: 14px;
+      }
+
+      .app-brand-name {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #1565c0;
+      }
+
+      .app-brand-version {
+        margin-top: 5px;
+        font-size: 12px;
+        color: #666666;
+      }
+
+      .side-menu-section {
+        margin-top: 16px;
+      }
+
+      .side-menu-heading {
+        margin: 0 10px 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #777777;
+      }
+
+      .side-menu-button,
+      .side-menu-link {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        margin: 3px 0;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: #222222;
+        font: inherit;
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .side-menu-button:hover,
+      .side-menu-link:hover {
+        background: #eaf2fc;
+        color: #1565c0;
+      }
+
+      .side-menu-button.is-active {
+        background: #dcecff;
+        color: #0d5fb8;
+        font-weight: 700;
+      }
+
+      .side-menu-separator {
+        margin: 14px 8px;
+        border: 0;
+        border-top: 1px solid #dddddd;
+      }
+
+      .app-main {
+        flex: 1;
+        min-width: 0;
+        box-sizing: border-box;
+        padding: 0;
+      }
+
+      .screen {
+        display: none;
+      }
+
+    </style>
+
+    <script>
+      const APP_CONTEXT = <?!= JSON.stringify({
+        page: page || '',
+        groupId: groupId || '',
+        mode: mode || '',
+        appUrl: appUrl || '',
+        ruleUrl: ruleUrl || '',
+        cardListUrl: cardListUrl || '',
+        gmSiteUrl: gmSiteUrl || '',
+        appName: appName || 'WAIG-2',
+        appVersion: appVersion || ''
+      }); ?>;
+    </script>
+  </head>
+
+  <body>
+    <?!= include('CommonLoading'); ?>
+    <div id="screen-member" class="screen">
+      <?!= include('MemberView'); ?>
+    </div>
+
+     <div id="screen-entry" class="screen">
+      <?!= include('EntryView'); ?>
+    </div>
+
+    <div id="screen-player" class="screen">
+      <?!= include('PlayerView'); ?>
+    </div>
+
+    <div id="screen-result" class="screen">
+      <?!= include('ResultView'); ?>
+    </div>
+
+    <div id="screen-overall" class="screen">
+      <?!= include('OverallView'); ?>
+    </div>
+
+    <div id="screen-history" class="screen">
+      <?!= include('ActionHistoryView'); ?>
+    </div>
+
+    <div id="screen-feedback" class="screen">
+      <?!= include('FeedbackView'); ?>
+    </div>
+
+    <div id="screen-report" class="screen">
+      <?!= include('ReportView'); ?>
+    </div>
+
+    <div id="screen-gm" class="screen">
+      <?!= include('GMView'); ?>
+    </div>
+
+    <div id="screen-gm_reset" class="screen">
+      <?!= include('GMResetView'); ?>
+    </div>   
+      
+    <script>
+      /**
+       * @summary 指定された画面を表示し、対応する初期化処理を実行する
+       * @function showScreen
+       * @read id, screen要素群, 各init...View関数
+       * @write 対象画面を表示し、その他の画面を非表示にする
+       * @update 2026-07-10
+       */
+      function showScreen(id) {
+        const screenId = id || 'member';
+
+        document
+          .querySelectorAll('.screen')
+          .forEach(function(screen) {
+            screen.style.display = 'none';
+          });
+
+        const target =
+          document.getElementById('screen-' + screenId);
+
+        if (!target) {
+          alert(
+            '画面が見つかりません: screen-' +
+            screenId
+          );
+
+          const fallback =
+            document.getElementById('screen-member');
+
+          if (fallback) {
+            fallback.style.display = 'block';
+          }
+
+          updateActiveMenu_('member');
+          return;
+        }
+
+        target.style.display = 'block';
+
+        updateActiveMenu_(screenId);
+
+        if (
+          screenId === 'member' &&
+          typeof initMemberView === 'function'
+        ) {
+          initMemberView();
+
+        } else if (
+          screenId === 'entry' &&
+          typeof initEntryView === 'function'
+        ) {
+          initEntryView();
+
+        } else if (
+          screenId === 'player' &&
+          typeof initPlayerView === 'function'
+        ) {
+          initPlayerView();
+
+        } else if (
+          screenId === 'result' &&
+          typeof initResultView === 'function'
+        ) {
+          initResultView();
+
+        } else if (
+          screenId === 'overall' &&
+          typeof initOverallView === 'function'
+        ) {
+          initOverallView();
+
+        } else if (
+          screenId === 'history' &&
+          typeof initActionHistoryView === 'function'
+        ) {
+          initActionHistoryView();
+
+        } else if (
+          screenId === 'feedback' &&
+          typeof initFeedbackView === 'function'
+        ) {
+          initFeedbackView();
+
+        } else if (
+          screenId === 'report' &&
+          typeof initReportView === 'function'
+        ) {
+          initReportView();
+
+        } else if (
+          screenId === 'gm' &&
+          typeof initGMView === 'function'
+        ) {
+          initGMView();
+
+        } else if (
+          screenId === 'gm_reset' &&
+          typeof initGMResetView === 'function'
+        ) {
+          initGMResetView();
+        }
+      }
+
+      /**
+       * @summary 現在表示中の画面に対応するメニューを強調する
+       * @function updateActiveMenu_
+       * @read screenId, data-screen-id属性
+       * @write メニューのis-activeクラス
+       * @update 2026-07-10
+       */
+      function updateActiveMenu_(screenId) {
+        document
+          .querySelectorAll('[data-page]')
+          .forEach(function(link) {
+            link.classList.toggle(
+              'is-active',
+              link.dataset.page === screenId
+            );
+          });
+      }
+      
+      /**
+       * @summary 左側共通メニューを初期化する
+       * @function initCommonMenu_
+       * @read APP_CONTEXT, メニュー要素
+       * @write アプリ情報、リンク、クリックイベント
+       * @update 2026-07-10
+       */
+      function initCommonMenu_() {
+        const appNameElement =
+          document.getElementById(
+            'common-app-name'
+          );
+
+        const appVersionElement =
+          document.getElementById(
+            'common-app-version'
+          );
+
+        if (appNameElement) {
+          appNameElement.textContent =
+            APP_CONTEXT.appName || 'WAIG-2';
+        }
+
+        if (appVersionElement) {
+          appVersionElement.textContent =
+            APP_CONTEXT.appVersion
+              ? 'Version ' + APP_CONTEXT.appVersion
+              : '';
+        }
+
+        document
+          .querySelectorAll('[data-screen-id]')
+          .forEach(function(button) {
+            button.addEventListener(
+              'click',
+              function() {
+                showScreen(
+                  button.dataset.screenId
+                );
+              }
+            );
+          });
+
+        setExternalLink_(
+          'common-rule-link',
+          APP_CONTEXT.ruleUrl
+        );
+
+        setExternalLink_(
+          'common-card-list-link',
+          APP_CONTEXT.cardListUrl
+        );
+
+        const portalLink =
+          document.getElementById(
+            'common-portal-link'
+          );
+
+        if (portalLink) {
+          portalLink.href =
+            APP_CONTEXT.appUrl || '#';
+        }
+      }
+
+      /**
+       * @summary 外部リンク要素へURLを設定する
+       * @function setExternalLink_
+       * @read elementId, url
+       * @write href、表示状態
+       * @update 2026-07-10
+       */
+      function setExternalLink_(elementId, url) {
+        const element =
+          document.getElementById(elementId);
+
+        if (!element) {
+          return;
+        }
+
+        if (url) {
+          element.href = url;
+          element.style.display = 'block';
+        } else {
+          element.removeAttribute('href');
+          element.style.display = 'none';
+        }
+      }
+
+      document.addEventListener(
+        'DOMContentLoaded',
+        function() {
+          initCommonMenu_();
+
+          const page =
+            APP_CONTEXT.page || 'member';
+
+          showScreen(page);
+        }
+      );
+    </script>
+  </body>
+</html>

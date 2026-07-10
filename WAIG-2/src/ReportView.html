@@ -1,0 +1,583 @@
+<h1>レポート</h1>
+
+<div id="report-root">
+  読み込み中...
+</div>
+
+
+<script>
+const REPORT_APP_URL = APP_CONTEXT.appUrl || '';
+let reportCurrentGroupId = APP_CONTEXT.groupId || '';
+
+/**
+ * @summary レポート画面の初期表示時に、対象プレイヤーのレポートまたはプレイヤー選択画面を表示する
+ * @function initReportView
+ * @read APP_CONTEXT.groupId, loadReport(), loadReportGroups()
+ * @write レポート画面の初期表示を開始する
+ * @update 2026-06-30
+ */
+function initReportView() {
+  reportCurrentGroupId = APP_CONTEXT.groupId || '';
+
+  if (reportCurrentGroupId) {
+    loadReport(reportCurrentGroupId);
+  } else {
+    loadReportGroups();
+  }
+}
+
+/**
+ * @summary レポート画面から参照し、レポート表示可能なプレイヤー一覧を取得する
+ * @function loadReportGroups
+ * @read google.script.run.getPlayerGroupList()
+ * @write report-root 要素にプレイヤー一覧またはエラーを表示する
+ * @update 2026-06-30
+ */
+function loadReportGroups() {
+  google.script.run
+    .withSuccessHandler(renderReportGroups)
+    .withFailureHandler(function(error) {
+      document.getElementById('report-root').innerHTML =
+        '<p style="color:red;">プレイヤー一覧の取得に失敗しました。</p><pre>' +
+        escapeHtml(error.message || error) +
+        '</pre>';
+    })
+    .getPlayerGroupList();
+}
+
+/**
+ * @summary レポート画面処理：レポート対象プレイヤーの選択ボタンを描画する
+ * @function renderReportGroups
+ * @read groups, escapeHtml(), escapeJs()
+ * @write report-root 要素にプレイヤー選択ボタンを表示する
+ * @update 2026-06-30
+ */
+function renderReportGroups(groups) {
+  const root = document.getElementById('report-root');
+
+  if (!groups || groups.length === 0) {
+    root.innerHTML =
+      '<section class="card">' +
+        '<h2>プレイヤーを選択</h2>' +
+        '<p>表示できるプレイヤーがありません。</p>' +
+      '</section>';
+    return;
+  }
+
+  let html = '';
+  html += '<section class="card">';
+  html += '<h2>プレイヤーを選択</h2>';
+  html += '<p>レポートを表示したいプレイヤーを選んでください。</p>';
+  html += '<div class="report-group-grid">';
+
+  groups.forEach(function(group) {
+    const groupId = group.groupId || group.id || '';
+    const label = group.displayName || group.groupLabel || groupId;
+
+    html += '<button type="button" class="group-button" onclick="openReport(\'' +
+      escapeJs(groupId) +
+      '\')">' +
+      escapeHtml(label) +
+      '</button>';
+  });
+
+  html += '</div>';
+  html += '</section>';
+
+  root.innerHTML = html;
+}
+
+/**
+ * @summary レポート画面から実行し、指定プレイヤーのレポートページへ遷移する
+ * @function openReport
+ * @read groupId, REPORT_APP_URL
+ * @write page=report と group_id を付与したURLへ遷移する
+ * @update 2026-06-30
+ */
+function openReport(groupId) {
+  const encoded = encodeURIComponent(groupId);
+
+  window.location.href =
+    REPORT_APP_URL +
+    '?page=report' +
+    '&group_id=' + encoded +
+    '&groupId=' + encoded;
+}
+
+/**
+ * @summary レポート画面から参照し、指定グループのプレイレポートデータを取得する
+ * @function loadReport
+ * @read groupId, google.script.run.getReportPageData(), showLoading(), hideLoading()
+ * @write 取得成功時は renderReport() を実行し、失敗時は report-root にエラーを表示する
+ * @update 2026-06-30
+ */
+function loadReport(groupId) {
+  showLoading();
+
+  google.script.run
+    .withSuccessHandler(function(data) {
+      hideLoading();
+      renderReport(data);
+    })
+    .withFailureHandler(function(error) {
+      hideLoading();
+
+      document.getElementById('report-root').innerHTML =
+        '<p style="color:red;">レポートの取得に失敗しました。</p><pre>' +
+        escapeHtml(error.message || error) +
+        '</pre>';
+    })
+    .getReportPageData(groupId);
+}
+
+/**
+ * @summary レポート画面処理：取得したプレイレポート全体をHTMLとして描画する
+ * @function renderReport
+ * @read data, buildCaseMissionHtml(), summaryItem(), renderHistorySection(), renderActionHistorySection(), renderRankingSection(), renderScoreCardSection()
+ * @write report-root 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+function renderReport(data) {
+  const root = document.getElementById('report-root');
+
+  if (!data || !data.success) {
+    root.innerHTML =
+      '<section class="card">' +
+        '<p>' +
+          escapeHtml((data && data.message) || 'レポートデータがありません。') +
+        '</p>' +
+      '</section>';
+    return;
+  }
+
+  const final = data.finalResult || {};
+  const play = data.playInfo || {};
+  const mission = data.missionInfo || {};
+
+  let html = '';
+
+  html += '<div class="print-button-area no-print">';
+  html += '<button type="button" onclick="window.print()">PDFで保存</button>';
+  html += '</div>';
+
+  html += '<section class="card">';
+  html += '<div class="report-header">';
+  html += '<h2>WAIG-2 プレイレポート</h2>';
+  html += '<div class="report-meta">';
+
+  html += '<div><b>プレイヤー：</b>' + escapeHtml(data.groupLabel || '-') + '</div>';
+
+  html += buildCaseMissionHtml(mission);
+
+  html += '<div><b>プレイ日：</b>' + escapeHtml(play.playDate || '-') + '</div>';  
+    html += '<div><b>プレイ時間：</b>' + escapeHtml(play.playStartAt || '-') + ' 〜 ' + escapeHtml(play.playEndAt || '-') + '</div>';
+    html += '<div><b>レポート作成日時：</b>' + escapeHtml(play.reportCreatedAt || '-') + '</div>';
+    html += '</div>';
+    html += '</div>';
+
+  html += '<div class="report-summary">';
+  html += summaryItem('最終Turn', data.currentTurn || '-');
+  html += summaryItem('最終順位', data.finalRank ? data.finalRank + '位' : '-');
+  html += summaryItem('利益成長率', reportPercent(final.growthRate, 2));
+  html += summaryItem('最終利益', reportNumber(final.profit));
+  html += '</div>';
+  html += '</section>';
+
+  html += renderHistorySection(data.history || []);
+  html += renderActionHistorySection(data.actionHistory || [], mission);
+  html += renderRankingSection(data.ranking || []);
+  html += renderScoreCardSection(data.scoreCard || {});
+
+  root.innerHTML = html;
+}
+
+/**
+ * @summary レポート画面処理：プレイヤースキル指標からプレイヤータイプを判定する
+ * @function judgePlayerSkillType_
+ * @read scoreCard
+ * @write プレイヤータイプ名を返す
+ * @update 2026-07-06
+ */
+function judgePlayerSkillType_(scoreCard) {
+  scoreCard = scoreCard || {};
+
+  const trafficGrowthRate = Number(scoreCard.trafficGrowthRate || 0);
+  const profitRate = Number(scoreCard.profitRate || 0);
+  const bounceImprovementRate = Number(scoreCard.bounceImprovementRate || 0);
+  const cvrImprovementRate = Number(scoreCard.cvrImprovementRate || 0);
+
+  const items = [
+    {
+      type: '集客成長型',
+      value: trafficGrowthRate
+    },
+    {
+      type: '収益改善型',
+      value: profitRate
+    },
+    {
+      type: '離脱改善型',
+      value: bounceImprovementRate
+    },
+    {
+      type: 'CVR改善型',
+      value: cvrImprovementRate
+    }
+  ];
+
+  items.sort(function(a, b) {
+    return b.value - a.value;
+  });
+
+  const top = items[0];
+  const second = items[1];
+
+  if (!top || top.value <= 0) {
+    return 'バランス型';
+  }
+
+  if (!second || top.value >= second.value * 1.3) {
+    return top.type;
+  }
+
+  return 'バランス型';
+}
+
+/**
+ * @summary レポート画面処理：WAIG公式スコアカード欄をHTMLとして生成する
+ * @function renderScoreCardSection
+ * @read scoreCard, reportPercent(), escapeHtml()
+ * @write 開催情報・公式ポイント・スキル指標・バッジを含むHTML文字列を返す
+ * @update 2026-06-30
+ */
+function renderScoreCardSection(scoreCard) {
+  let html = '';
+
+  html += '<section class="score-card">';
+  html += '<h2>WAIG公式スコアカード</h2>';
+
+  html += '<h3>開催情報</h3>';
+  html += '<table>';
+  html += '<tr><th>開催日</th><td>' + escapeHtml(scoreCard.eventDate || '-') + '</td></tr>';
+  html += '<tr><th>開催マスター</th><td>' + escapeHtml(scoreCard.masterName || '-') + '</td></tr>';
+  html += '<tr><th>シナリオ</th><td>' + (scoreCard.scenarioName || '-') + '</td></tr>';
+  html += '<tr><th>選択内容</th><td>' + (scoreCard.selectionSummary || '-') + '</td></tr>';
+  html += '<tr><th>順位</th><td>' + escapeHtml(String(scoreCard.finalRank || '-')) + '位 / ' + escapeHtml(String(scoreCard.participantCount || '-')) + '名</td></tr>';
+  html += '</table>';
+
+  html += '<h3>WAIG公式ポイント</h3>';
+  html += '<table>';
+  html += '<tr><th>成長率</th><td>' + escapeHtml(String(scoreCard.growthRank || '-')) + '位</td><td>' + escapeHtml(String(scoreCard.points?.growth || 0)) + 'pt</td></tr>';
+  html += '<tr><th>利益</th><td>' + escapeHtml(String(scoreCard.profitRank || '-')) + '位</td><td>' + escapeHtml(String(scoreCard.points?.profit || 0)) + 'pt</td></tr>';
+  html += '<tr><th>CPA</th><td>' + escapeHtml(String(scoreCard.cpaRank || '-')) + '位</td><td>' + escapeHtml(String(scoreCard.points?.cpa || 0)) + 'pt</td></tr>';
+  html += '<tr><th>ROAS</th><td>' + escapeHtml(String(scoreCard.roasRank || '-')) + '位</td><td>' + escapeHtml(String(scoreCard.points?.roas || 0)) + 'pt</td></tr>';
+  html += '<tr><th colspan="2">合計</th><td><b>' + escapeHtml(String(scoreCard.totalPoint || 0)) + 'pt</b></td></tr>';
+  html += '</table>';
+
+  html += '<p class="note">';
+  html += '※WAIG公式ポイントは、成長率・利益・CPA・ROASの4項目について順位に応じて付与されます。1位10点、2位7点、3位5点、4位以下は1点です。';
+  html += '</p>';
+
+
+  const playerType = judgePlayerSkillType_(scoreCard);
+
+  html += '<h3>プレイヤースキル指標 <span class="player-type-badge">' +
+   escapeHtml(playerType) +
+  '</span></h3>';
+
+  html += '<table>';
+  html += '<tr><th>集客増加率</th><td>' + reportPercent(scoreCard.trafficGrowthRate, 2) + '</td></tr>';
+  html += '<tr><th>利益率</th><td>' + reportPercent(scoreCard.profitRate, 2) + '</td></tr>';
+  html += '<tr><th>離脱改善率</th><td>' + reportPercent(scoreCard.bounceImprovementRate, 2) + '</td></tr>';
+  html += '<tr><th>CVR改善率</th><td>' + reportPercent(scoreCard.cvrImprovementRate, 2) + '</td></tr>';
+  html += '</table>';
+
+  html += '<p class="note">';
+  html += '※プレイヤースキル指標は、初期状態から最終結果までの変化をもとに、プレイヤーの改善傾向や戦略の特徴を示す参考指標です。';
+  html += '</p>';
+
+
+  html += '<h3>獲得バッジ</h3>';
+
+  if (scoreCard.badges && scoreCard.badges.length > 0) {
+    html += '<p>' + escapeHtml(scoreCard.badges.join('　')) + '</p>';
+  } else {
+    html += '<p>なし</p>';
+  }
+
+  html += '<p class="official-note">';
+  html += '本スコアカードはWAIG公式記録として発行されたものです。<br>';
+  html += '発行日：' + escapeHtml(scoreCard.issuedAt || '');
+  html += '</p>';
+
+  html += '</section>';
+  return html;
+}
+
+/**
+ * @summary レポート画面内部処理：サマリーカード1項目分のHTMLを生成する
+ * @function summaryItem
+ * @read label, value, escapeHtml()
+ * @write report-summary-item 用のHTML文字列を返す
+ * @update 2026-06-30
+ */
+function summaryItem(label, value) {
+  return '<div class="report-summary-item">' +
+    '<div class="label">' + escapeHtml(label) + '</div>' +
+    '<div class="value">' + escapeHtml(value) + '</div>' +
+    '</div>';
+}
+
+/**
+ * @summary レポート画面処理：ターン別成績セクションをHTMLとして生成する
+ * @function renderHistorySection
+ * @read history, reportPercent(), reportNumber(), escapeHtml()
+ * @write ターン別成績テーブルのHTML文字列を返す
+ * @update 2026-06-30
+ */
+function renderHistorySection(history) {
+  let html = '';
+
+  html += '<section class="card">';
+  html += '<h2>ターン別成績</h2>';
+
+  if (!history || history.length === 0) {
+    html += '<p>成績データがありません。</p>';
+    html += '</section>';
+    return html;
+  }
+
+  html += '<table>';
+  html += '<tr>';
+  html += '<th>Turn</th>';
+  html += '<th>利益成長率順位</th>';
+  html += '<th>利益成長率</th>';
+  html += '<th>売上</th>';
+  html += '<th>広告費</th>';
+  html += '<th>利益</th>';
+  html += '<th>ROAS</th>';
+  html += '<th>CPA</th>';
+  html += '<th>CV数</th>';
+  html += '</tr>';
+
+  history.forEach(function(row) {
+    html += '<tr>';
+    html += '<td>' + escapeHtml(row.turn) + '</td>';
+    html += '<td>' + escapeHtml(row.growthRank || '-') + '</td>';
+    html += '<td>' + reportPercent(row.growthRate, 2) + '</td>';
+    html += '<td>' + reportNumber(row.sales) + '</td>';
+    html += '<td>' + reportNumber(row.adCost) + '</td>';
+    html += '<td>' + reportNumber(row.profit) + '</td>';
+    html += '<td>' + escapeHtml(row.roas || '-') + '</td>';
+    html += '<td>' + reportNumber(row.cpa) + '</td>';
+    html += '<td>' + reportNumber(row.cvCount) + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</table>';
+  html += '<p class="note">';
+  html += '※利益成長率は、ゲーム開始時点（Turn0）の利益を基準にした伸び率です。';
+  html += '初期利益が小さい場合、大きな数値で表示されることがあります。';
+  html += '</p>';
+  html += '</section>';
+
+  return html;
+}
+
+/**
+ * @summary レポート画面処理：ターン別の意思決定履歴セクションをHTMLとして生成する
+ * @function renderActionHistorySection
+ * @read actions, escapeHtml()
+ * @write 市場環境・採用施策・組み合わせ効果・KPI変化を含むHTML文字列を返す
+ * @update 2026-06-30
+ */
+function renderActionHistorySection(actions) {
+  let html = '';
+
+  html += '<section class="card">';
+  html += '<h2>意思決定履歴</h2>';
+
+  if (!actions || actions.length === 0) {
+    html += '<p>施策履歴がありません。</p>';
+    html += '</section>';
+    return html;
+  }
+
+  html += '<table class="report-action-history-table">';
+  html += '<tr>';
+  html += '<th>Turn</th>';
+  html += '<th>市場環境</th>';
+  html += '<th>採用施策</th>';
+  html += '<th>KPI変化</th>';
+  html += '</tr>';
+
+  actions.forEach(function(row) {
+    html += '<tr>';
+
+    html += '<td>Turn ' + escapeHtml(row.turn) + '</td>';
+
+    html += '<td class="report-market-cell">';
+    html += '<div><b>市場：</b>' +
+      escapeHtml(row.trendLabel || row.trendId || '-') +
+      '</div>';
+    html += '<div><b>競合：</b>' +
+      escapeHtml(row.tcLabel || row.tcId || '-') +
+      '</div>';
+    html += '</td>';
+
+    html += '<td class="report-action-cell">';
+
+    if (row.actions && row.actions.length > 0) {
+      row.actions.forEach(function(action) {
+        html += '<div class="action-line">' +
+          escapeHtml(action.actionLabel || action.actionId || '-') +
+          '</div>';
+      });
+    } else {
+      html += '-';
+    }
+
+    if (row.synergy) {
+      html += '<div class="synergy-line">';
+      html += '<div class="synergy-title">' +
+        escapeHtml(row.synergy.synergyLabel || '組み合わせ効果') +
+        '</div>';
+
+      if (row.synergy.synergyDescription) {
+        html += '<div class="synergy-desc">' +
+          escapeHtml(row.synergy.synergyDescription) +
+          '</div>';
+      }
+
+      html += '</div>';
+    }
+
+    html += '</td>';
+
+    html += '<td class="report-effect-cell">';
+
+    if (row.effects && row.effects.length > 0) {
+      row.effects.forEach(function(effect) {
+        html += '<div>' + escapeHtml(effect) + '</div>';
+      });
+    } else {
+      html += '-';
+    }
+
+    html += '</td>';
+
+    html += '</tr>';
+  });
+
+  html += '</table>';
+  html += '</section>';
+
+  return html;
+}
+
+/**
+ * @summary レポート画面処理：同一ターン終了時点の全体成績ランキングをHTMLとして生成する
+ * @function renderRankingSection
+ * @read ranking, reportPercent(), reportNumber(), escapeHtml()
+ * @write 全体成績ランキングテーブルのHTML文字列を返す
+ * @update 2026-06-30
+ */
+function renderRankingSection(ranking) {
+  let html = '';
+
+  html += '<section class="card">';
+  html += '<h2>全体成績</h2>';
+  html += '<p>同じターン終了時点の利益成長率ランキングです。</p>';
+
+  if (!ranking || ranking.length === 0) {
+    html += '<p>全体成績データがありません。</p>';
+    html += '</section>';
+    return html;
+  }
+
+  html += '<table>';
+  html += '<tr>';
+  html += '<th>順位</th>';
+  html += '<th>プレイヤー</th>';
+  html += '<th>利益成長率</th>';
+  html += '<th>利益</th>';
+  html += '<th>売上</th>';
+  html += '<th>ROAS</th>';
+  html += '<th>CPA</th>';
+  html += '</tr>';
+
+  ranking.forEach(function(row, index) {
+    html += '<tr>';
+    html += '<td>' + (index + 1) + '</td>';
+    html += '<td>' + escapeHtml(row.groupLabel || row.groupId || '-') + '</td>';
+    html += '<td>' + reportPercent(row.growthRate, 2) + '</td>';
+    html += '<td>' + reportNumber(row.profit) + '</td>';
+    html += '<td>' + reportNumber(row.sales) + '</td>';
+    html += '<td>' + escapeHtml(row.roas || '-') + '</td>';
+    html += '<td>' + reportNumber(row.cpa) + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</table>';
+  html += '</section>';
+
+  return html;
+}
+
+/**
+ * @summary レポート画面内部処理：数値をカンマ区切り表示に整形する
+ * @function reportNumber
+ * @read value
+ * @write カンマ区切りの数値文字列、またはハイフンを返す
+ * @update 2026-06-30
+ */
+function reportNumber(value) {
+  if (value === '' || value === null || value === undefined) {
+    return '-';
+  }
+
+  const number = Number(value);
+
+  if (isNaN(number)) {
+    return '-';
+  }
+
+  return number.toLocaleString();
+}
+
+/**
+ * @summary レポート画面内部処理：小数値をパーセント表記に整形する
+ * @function reportPercent
+ * @read value, digit
+ * @write 指定桁数のパーセント文字列、またはハイフンを返す
+ * @update 2026-06-30
+ */
+function reportPercent(value, digit) {
+  if (value === '' || value === null || value === undefined) {
+    return '-';
+  }
+
+  const number = Number(value);
+
+  if (isNaN(number)) {
+    return '-';
+  }
+
+  return (number * 100).toFixed(digit || 2) + '%';
+}
+
+/**
+ * @summary レポート画面内部処理：JavaScript文字列埋め込み用に特殊文字をエスケープする
+ * @function escapeJs
+ * @read text
+ * @write シングルクォート・改行・バックスラッシュをエスケープした文字列を返す
+ * @update 2026-06-30
+ */
+function escapeJs(text) {
+  return String(text === null || text === undefined ? '' : text)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '');
+}
+</script>

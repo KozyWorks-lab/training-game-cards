@@ -1,0 +1,675 @@
+  <h1>個人成績</h1>
+
+  <section class="card">
+    <h2>プレイヤーを選択</h2>
+    <p>
+      自分のプレイヤー枠を選ぶと、初期値からの変化、ターン別推移、施策履歴を確認できます。
+    </p>
+    <div id="group-buttons">プレイヤーを読み込み中...</div>
+  </section>
+
+  <section class="card">
+    <div id="kpi-diff-area">
+      <p>プレイヤーを選択してください。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 id="history-title">ターン別推移</h2>
+    <div id="result-history-list">
+      プレイヤーを選択してください。
+    </div>
+  </section>
+
+  <section class="card">
+    <div id="action-history"></div>
+    <div id="sales-chart"></div>
+    <div id="profit-chart"></div>
+  </section>
+
+  <div class="hakase-box">
+    <img
+      id="hakase-image"
+      src="https://drive.google.com/thumbnail?id=1nM8JFgEDUixB1tORdoIoc1NcjQxAdQCG"
+      class="hakase-avatar"
+      alt="WAIG博士">
+
+    <div class="hakase-comment-area">
+      <h3>WAIG博士</h3>
+      <div id="result-hakase-comment">
+        数字には必ず理由がありますよ。
+      </div>
+    </div>
+  </div>
+
+<script>
+/**
+ * @summary 個人成績画面の初期表示時に、プレイヤー選択ボタンを読み込む
+ * @function initResultView
+ * @read loadGroupButtons()
+ * @write 個人成績画面の初期表示を開始する
+ * @update 2026-06-30
+ */
+function initResultView() {
+  loadGroupButtons();
+}
+
+/**
+ * @summary 個人成績画面処理：WAIG博士コメントを更新する
+ * @function updateResultHakaseComment
+ * @read message, result-hakase-comment要素
+ * @write result-hakase-comment 要素のtextContentを更新する
+ * @update 2026-06-30
+ */
+function updateResultHakaseComment(message) {
+  const comment = document.getElementById('result-hakase-comment');
+  if (comment) {
+    comment.textContent = message;
+  }
+}
+
+/**
+ * @summary 個人成績画面処理：成績推移と施策履歴からWAIG博士コメントを生成する
+ * @function getHistoryHakaseComment
+ * @read groupId, results, actionHistory, getGroupLabel()
+ * @write 直近ターンの施策・効果・売上利益変化を踏まえたコメント文字列を返す
+ * @update 2026-06-30
+ */
+function getHistoryHakaseComment(groupId, results, actionHistory) {
+  if (!results || results.length === 0) {
+    return 'まだ分析できるデータがありません。';
+  }
+
+  const latest = results[results.length - 1];
+  const playerName = getGroupLabel(groupId);
+  const playerLabel = playerName.endsWith('さん')
+  ? playerName
+  : playerName + 'さん';
+
+  if (!actionHistory || actionHistory.length === 0) {
+    return playerName +
+      'の結果を確認してください。数字には必ず理由があります。';
+  }
+
+  const latestTurn = Number(latest.turn);
+
+  const latestTurnActions = actionHistory.filter(function(row) {
+    return Number(row.turn) === latestTurn &&
+      row.rowType !== 'synergy';
+  });
+
+  const latestTurnSynergy = actionHistory.find(function(row) {
+    return Number(row.turn) === latestTurn &&
+      row.rowType === 'synergy';
+  });
+
+  const actionLabels = latestTurnActions
+    .map(function(row) {
+      return row.actionLabel || row.actionId || '';
+    })
+    .filter(Boolean);
+
+  const effectTexts = latestTurnActions
+    .map(function(row) {
+      return row.effectShort || '';
+    })
+    .filter(Boolean);
+
+  let actionText = '';
+
+  if (actionLabels.length >= 2) {
+    actionText = actionLabels.join(' と ');
+  } else if (actionLabels.length === 1) {
+    actionText = actionLabels[0];
+  } else {
+    actionText = '今回の施策';
+  }
+
+  let effectText = '';
+
+  if (effectTexts.length > 0) {
+    effectText = effectTexts.join(' ／ ');
+  }
+
+  if (latestTurnSynergy) {
+    effectText +=
+      (effectText ? '。さらに、' : '') +
+      '組み合わせ効果として ' +
+      (latestTurnSynergy.effectShort || '追加効果') +
+      ' が出ています';
+  }
+
+  if (results.length >= 2) {
+    const prev = results[results.length - 2];
+
+    const profitDiff =
+      Number(latest.profit) - Number(prev.profit);
+
+    const salesDiff =
+      Number(latest.sales) - Number(prev.sales);
+
+    if (profitDiff > 0 && salesDiff > 0) {
+      return playerLabel  +
+        'は ' +
+        actionText +
+        ' を選びましたね。' +
+        (effectText ? effectText + ' の効果もあり、' : '') +
+        '売上と利益が前ターンより伸びています。';
+    }
+
+    if (profitDiff > 0) {
+      return playerLabel  +
+        'は ' +
+        actionText +
+        ' を選びましたね。売上だけでなく利益が伸びている点に注目です。';
+    }
+
+    if (profitDiff < 0) {
+      return playerLabel  +
+        'は ' +
+        actionText +
+        ' を選びましたね。今回は利益が下がっています。広告費やCPAも確認してくださいね。';
+    }
+  }
+
+  if (Number(latest.growthRank || latest.rank) === 1) {
+    return playerLabel  +
+      '、お見事です！現在トップを走っていますぞ。';
+  }
+
+  return playerLabel  +
+    'は ' +
+    actionText +
+    ' を選びましたね。結果とのつながりを考えてください。';
+}
+
+/**
+ * @summary 個人成績画面から参照し、表示対象のプレイヤー一覧を取得する
+ * @function loadGroupButtons
+ * @read google.script.run.getPlayerGroupList()
+ * @write group-buttons 要素にプレイヤーボタンまたはエラーを表示する
+ * @update 2026-06-30
+ */
+function loadGroupButtons() {
+
+  google.script.run
+    .withSuccessHandler(function(groups) {
+      renderGroupButtons(groups);
+    })
+    .withFailureHandler(function(error) {
+      alert('getPlayerGroupList失敗: ' + (error.message || error));
+
+      document.getElementById('group-buttons').innerHTML =
+        '<p style="color:red;">プレイヤーの取得に失敗しました。</p><pre>' +
+        escapeHtml(error.message || error) +
+        '</pre>';
+    })
+    .getPlayerGroupList();
+}
+
+/**
+ * @summary 個人成績画面処理：プレイヤー選択ボタンを描画し、表示名とミッション情報を保持する
+ * @function renderGroupButtons
+ * @read groups, setGroupDisplayName(), setGroupMissionInfo(), loadGroupHistory()
+ * @write group-buttons 要素にプレイヤー選択ボタンを追加する
+ * @update 2026-06-30
+ */
+function renderGroupButtons(groups) {
+  const container = document.getElementById('group-buttons');
+  container.innerHTML = '';
+
+  if (!groups || groups.length === 0) {
+    container.innerHTML =
+      '<p>表示できるプレイヤーがありません。</p>';
+    return;
+  }
+
+  groups.forEach(function(group) {
+    setGroupDisplayName(
+      group.groupId,
+      group.displayName || group.groupId
+    );
+
+   setGroupMissionInfo(group.groupId, {
+    challengeId: group.challengeId || '',
+    challengeName: group.challengeLabel || group.challengeName || '',
+    missionId: group.missionId || '',
+    missionName: group.missionLabel || group.missionName || '',
+    missionDifficulty: group.missionDifficulty || '',
+    skillId: group.skillId || '',
+    skillName: group.skillLabel || group.skillName || '',
+    skillActivation: group.activation || group.skillActivation || ''
+  });
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'group-button';
+    button.textContent = group.displayName || group.groupId;
+    button.title = group.groupId;
+
+    button.onclick = function() {
+      loadGroupHistory(group.groupId);
+    };
+
+    container.appendChild(button);
+  });
+}
+
+/**
+ * @summary 個人成績画面から参照し、指定グループのターン別成績履歴を取得する
+ * @function loadGroupHistory
+ * @read groupId, google.script.run.getGroupHistory(), loadKpiDiff()
+ * @write 取得成功時は renderGroupHistory() を実行し、最新ターンのKPI比較を読み込む
+ * @update 2026-06-30
+ */
+function loadGroupHistory(groupId) {
+  google.script.run
+    .withSuccessHandler(function(results) {
+      renderGroupHistory(groupId, results);
+
+      if (results && results.length > 0) {
+        const latestTurn = results[results.length - 1].turn;
+        loadKpiDiff(groupId, latestTurn);
+      }
+    })
+    .withFailureHandler(function(error) {
+      document.getElementById('result-history-list').innerHTML =
+        '<p style="color:red;">個人成績の取得に失敗しました。</p><pre>' +
+        (error.message || error) +
+        '</pre>';
+    })
+    .getGroupHistory(groupId);
+}
+
+/**
+ * @summary 個人成績画面から参照し、指定グループ・指定ターンの初期値からのKPI変化を取得する
+ * @function loadKpiDiff
+ * @read groupId, targetTurn, google.script.run.getKpiDiffState()
+ * @write kpi-diff-area にKPI比較結果またはエラーを表示する
+ * @update 2026-06-30
+ */
+function loadKpiDiff(groupId, targetTurn) {
+  google.script.run
+    .withSuccessHandler(renderKpiDiff)
+    .withFailureHandler(function(error) {
+      document.getElementById('kpi-diff-area').innerHTML =
+        '<p style="color:red;">KPI比較の取得に失敗しました。</p>' +
+        '<pre>' + (error.message || error) + '</pre>';
+    })
+    .getKpiDiffState(groupId, targetTurn);
+}
+
+/**
+ * @summary 個人成績画面処理：初期値から現在値へのKPI変化を表として描画する
+ * @function renderKpiDiff
+ * @read data, buildDiffRow()
+ * @write kpi-diff-area 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+function renderKpiDiff(data) {
+  const area = document.getElementById('kpi-diff-area');
+  if (!area) return;
+
+  if (!data || !data.success) {
+    area.innerHTML =
+      '<p>' + ((data && data.message) || 'KPI比較データがありません。') + '</p>';
+    return;
+  }
+
+  area.innerHTML =
+    '<h2>初期値からの変化</h2>' +
+    '<table>' +
+      '<tr>' +
+        '<th>KPI</th>' +
+        '<th>初期値</th>' +
+        '<th>現在値</th>' +
+        '<th>変化</th>' +
+      '</tr>' +
+      buildDiffRow('GI(一般流入)', data.gi, 0) +
+      buildDiffRow('AI(広告流入)', data.ai, 0) +
+      buildDiffRow('離脱率', data.bounce, 3) +
+      buildDiffRow('回遊', data.browse, 2) +
+      buildDiffRow('CVR', data.cvr, 4) +
+      buildDiffRow('AOV', data.aov, 0) +
+      buildDiffRow('CPC', data.cpc, 0) +
+    '</table>';
+}
+
+/**
+ * @summary 個人成績画面内部処理：KPI比較表の1行分HTMLを生成する
+ * @function buildDiffRow
+ * @read label, item, digit, formatKpiValue(), escapeHtml()
+ * @write 初期値・現在値・変化量を含むtr文字列を返す
+ * @update 2026-06-30
+ */
+function buildDiffRow(label, item, digit) {
+  if (!item) return '';
+
+  const mark =
+    Number(item.diff) > 0 ? '↑' :
+    Number(item.diff) < 0 ? '↓' :
+    '→';
+
+  return (
+    '<tr>' +
+      '<td>' + escapeHtml(label) + '</td>' +
+      '<td>' + formatKpiValue(item.base, digit) + '</td>' +
+      '<td>' + formatKpiValue(item.current, digit) + '</td>' +
+      '<td>' + mark + ' ' + formatKpiValue(item.diff, digit, true) + '</td>' +
+    '</tr>'
+  );
+}
+
+/**
+ * @summary 個人成績画面内部処理：KPI値を指定桁数で表示用に整形する
+ * @function formatKpiValue
+ * @read value, digit, showSign
+ * @write 指定桁数の数値文字列を返し、必要に応じて正数に+を付ける
+ * @update 2026-06-30
+ */
+function formatKpiValue(value, digit, showSign) {
+  const num = Number(value || 0);
+  const formatted =
+    digit === 0 ? num.toLocaleString() : num.toFixed(digit);
+
+  if (showSign && num > 0) {
+    return '+' + formatted;
+  }
+
+  return formatted;
+}
+
+/**
+ * @summary 個人成績画面処理：指定グループのターン別成績表とチャートを描画する
+ * @function renderGroupHistory
+ * @read groupId, results, renderMissionInfoForGroup(), loadActionHistory(), renderSalesChart(), renderProfitChart()
+ * @write history-title、result-history-list、action-history、sales-chart、profit-chart を更新する
+ * @update 2026-06-30
+ */
+function renderGroupHistory(groupId, results) {
+  document.getElementById('history-title').textContent =
+    getGroupLabel(groupId) + ' のターン別推移';
+
+  if (!results || results.length === 0) {
+    document.getElementById('sales-chart').innerHTML = '';
+    document.getElementById('profit-chart').innerHTML = '';
+    document.getElementById('action-history').innerHTML = '';
+    document.getElementById('result-history-list').innerHTML =
+      '<p>ターン別データがありません。</p>';
+    updateResultHakaseComment('まだ分析できるデータがありませんな。');
+    return;
+  }
+
+  let html = '';
+
+  html += renderMissionInfoForGroup(groupId);
+
+  html += '<table>';
+  html += '<tr>';
+  html += '<th>Turn</th>';
+  html += '<th>利益成長率順位</th>';
+  html += '<th>利益成長率</th>';
+  html += '<th>売上</th>';
+  html += '<th>広告費</th>';
+  html += '<th>利益</th>';
+  html += '<th>ROAS</th>';
+  html += '<th>CPA</th>';
+  html += '<th>CV数</th>';
+  html += '</tr>';
+
+  results.forEach(function(row) {
+    html += '<tr>';
+    html += '<td>' + escapeHtml(row.turn) + '</td>';
+    html += '<td>' + escapeHtml(row.growthRank || '-') + '</td>';
+    html += '<td>' + formatPercent(row.growthRate, 2) + '</td>';
+    html += '<td>' + Number(row.sales || 0).toLocaleString() + '</td>';
+    html += '<td>' + Number(row.adCost || 0).toLocaleString() + '</td>';
+    html += '<td>' + Number(row.profit || 0).toLocaleString() + '</td>';
+    html += '<td>' + escapeHtml(row.roas || '') + '</td>';
+    html += '<td>' + Number(row.cpa || 0).toLocaleString() + '</td>';
+    html += '<td>' + Number(row.cvCount || 0).toLocaleString() + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</table>';
+
+  document.getElementById('result-history-list').innerHTML = html;
+   document.getElementById('action-history').innerHTML =
+    '<h3>施策履歴</h3><p>施策履歴を読み込み中...</p>';
+
+  loadActionHistory(groupId, results);
+  renderSalesChart(results);
+  renderProfitChart(results);
+ 
+}
+
+/**
+ * @summary 個人成績画面処理：ターン別売上推移をSVG折れ線グラフとして描画する
+ * @function renderSalesChart
+ * @read results
+ * @write sales-chart 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+function renderSalesChart(results) {
+  if (!results || results.length === 0) {
+    document.getElementById('sales-chart').innerHTML = '';
+    return;
+  }
+
+  const width = 700;
+  const height = 260;
+  const padding = 40;
+
+  const values = results.map(row => Number(row.sales || 0));
+  const maxValue = Math.max(...values);
+  const minValue = Math.min(...values);
+
+  const points = results.map(function(row, index) {
+    const x = padding + index * ((width - padding * 2) / (results.length - 1 || 1));
+    const y = height - padding -
+      ((Number(row.sales || 0) - minValue) / (maxValue - minValue || 1)) *
+      (height - padding * 2);
+
+    return {
+      x: x,
+      y: y,
+      turn: row.turn,
+      value: row.sales
+    };
+  });
+
+  let html = '';
+  html += '<h3 class="chart-title">売上推移</h3>';
+  html += '<svg viewBox="0 0 ' + width + ' ' + height + '" style="width:100%; max-width:700px;">';
+  html += '<polyline points="' + points.map(p => p.x + ',' + p.y).join(' ') + '" fill="none" stroke="#1976d2" stroke-width="4"/>';
+
+  points.forEach(function(p) {
+    html += '<circle cx="' + p.x + '" cy="' + p.y + '" r="5" fill="#1976d2"></circle>';
+    html += '<text x="' + p.x + '" y="' + (p.y - 10) + '" text-anchor="middle" font-size="12">' + Number(p.value || 0).toLocaleString() + '</text>';
+    html += '<text x="' + p.x + '" y="' + (height - 12) + '" text-anchor="middle" font-size="12">T' + escapeHtml(p.turn) + '</text>';
+  });
+
+  html += '</svg>';
+
+  document.getElementById('sales-chart').innerHTML = html;
+}
+
+/**
+ * @summary 個人成績画面処理：ターン別利益推移をSVG折れ線グラフとして描画する
+ * @function renderProfitChart
+ * @read results
+ * @write profit-chart 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+function renderProfitChart(results) {
+  if (!results || results.length === 0) {
+    document.getElementById('profit-chart').innerHTML = '';
+    return;
+  }
+
+  const width = 700;
+  const height = 260;
+  const padding = 40;
+
+  const values = results.map(row => Number(row.profit || 0));
+  const maxValue = Math.max(...values);
+  const minValue = Math.min(...values);
+
+  const points = results.map(function(row, index) {
+    const x = padding + index * ((width - padding * 2) / (results.length - 1 || 1));
+    const y = height - padding -
+      ((Number(row.profit || 0) - minValue) / (maxValue - minValue || 1)) *
+      (height - padding * 2);
+
+    return {
+      x: x,
+      y: y,
+      turn: row.turn,
+      value: row.profit
+    };
+  });
+
+  let html = '';
+  html += '<h3 class="chart-title">利益推移</h3>';
+  html += '<svg viewBox="0 0 ' + width + ' ' + height + '" style="width:100%; max-width:700px;">';
+  html += '<polyline points="' + points.map(p => p.x + ',' + p.y).join(' ') + '" fill="none" stroke="#2e7d32" stroke-width="4"/>';
+
+  points.forEach(function(p) {
+    html += '<circle cx="' + p.x + '" cy="' + p.y + '" r="5" fill="#2e7d32"></circle>';
+    html += '<text x="' + p.x + '" y="' + (p.y - 10) + '" text-anchor="middle" font-size="12">' + Number(p.value || 0).toLocaleString() + '</text>';
+    html += '<text x="' + p.x + '" y="' + (height - 12) + '" text-anchor="middle" font-size="12">T' + escapeHtml(p.turn) + '</text>';
+  });
+
+  html += '</svg>';
+
+  document.getElementById('profit-chart').innerHTML = html;
+}
+
+/**
+ * @summary 個人成績画面から参照し、指定グループの施策履歴を取得する
+ * @function loadActionHistory
+ * @read groupId, kpiResults, google.script.run.getActionHistory(), renderActionHistory(), getHistoryHakaseComment()
+ * @write action-history 要素とWAIG博士コメントを更新する
+ * @update 2026-06-30
+ */
+function loadActionHistory(groupId, kpiResults) {
+  const area = document.getElementById('action-history');
+
+  area.innerHTML =
+    '<h3>施策履歴</h3><p>施策履歴を読み込み中...</p>';
+
+  google.script.run
+    .withSuccessHandler(function(history) {
+      try {
+        renderActionHistory(history || [], groupId);
+
+        updateResultHakaseComment(
+          getHistoryHakaseComment(groupId, kpiResults, history || [])
+        );
+      } catch (e) {
+        area.innerHTML =
+          '<h3>施策履歴</h3>' +
+          '<p style="color:red;">施策履歴の描画中にエラーが発生しました。</p>' +
+          '<pre>' + escapeHtml(e.message || e) + '</pre>';
+      }
+    })
+    .withFailureHandler(function(error) {
+      area.innerHTML =
+        '<h3>施策履歴</h3>' +
+        '<p style="color:red;">施策履歴の取得に失敗しました。</p>' +
+        '<pre>' + escapeHtml(error.message || error) + '</pre>';
+    })
+    .getActionHistory(groupId);
+}
+
+/**
+ * @summary 個人成績画面処理：指定グループの施策履歴を表として描画する
+ * @function renderActionHistory
+ * @read history, groupId, renderMissionInfoForGroup(), escapeHtml()
+ * @write action-history 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+function renderActionHistory(history, groupId) {
+  let html = '';
+
+  html += '<h3>施策履歴</h3>';
+  html += renderMissionInfoForGroup(groupId);
+
+  if (!history || history.length === 0) {
+    html += '<p>施策履歴はまだありません。</p>';
+    document.getElementById('action-history').innerHTML = html;
+    return;
+  }
+
+  html += '<table>';
+  html += '<tr>';
+  html += '<th>Turn</th>';
+  html += '<th>市場・競合</th>';
+  html += '<th>採用施策</th>';
+  html += '<th>KPI変化</th>';
+  html += '</tr>';
+
+  history.forEach(function(row) {
+    html += '<tr>';
+
+    html += '<td>' + escapeHtml(row.turn) + '</td>';
+
+    html += '<td class="history-market-cell">';
+    html += '<div><b>市場：</b>' +
+      escapeHtml(row.trendLabel || row.trendId || '-') +
+      '</div>';
+    html += '<div><b>競合：</b>' +
+      escapeHtml(row.tcLabel || row.tcId || '-') +
+      '</div>';
+    html += '</td>';
+
+    html += '<td class="history-action-cell">';
+
+    if (row.actions && row.actions.length > 0) {
+      row.actions.forEach(function(action) {
+        html += '<div class="action-line">' +
+          escapeHtml(action.actionLabel || action.actionId || '-') +
+          '</div>';
+      });
+    } else {
+      html += '-';
+    }
+
+    if (row.synergy) {
+      html += '<div class="synergy-line">';
+      html += '<div class="synergy-title">' +
+        escapeHtml(row.synergy.synergyLabel || '組み合わせ効果') +
+        '</div>';
+
+      if (row.synergy.synergyDescription) {
+        html += '<div class="synergy-desc">' +
+          escapeHtml(row.synergy.synergyDescription) +
+          '</div>';
+      }
+
+      html += '</div>';
+    }
+
+    html += '</td>';
+
+    html += '<td class="history-kpi-cell">';
+
+    if (row.effects && row.effects.length > 0) {
+      row.effects.forEach(function(effect) {
+        html += '<div>' + escapeHtml(effect) + '</div>';
+      });
+    } else {
+      html += '-';
+    }
+
+    html += '</td>';
+
+    html += '</tr>';
+  });
+
+  html += '</table>';
+
+  document.getElementById('action-history').innerHTML = html;
+}
+
+</script>

@@ -1,0 +1,184 @@
+<section class="card">
+  <h2>WAIG博士の講評</h2>
+
+ <div id="feedback-print-button-area" class="print-button-area no-print" style="display:none;">
+    <button type="button" onclick="window.print()">
+      PDFで保存
+    </button>
+  </div>
+
+  <div class="feedback-hero">
+    <img
+      src="https://drive.google.com/thumbnail?id=1nM8JFgEDUixB1tORdoIoc1NcjQxAdQCG&sz=w400"
+      class="feedback-hakase-image"
+      alt="WAIG博士">
+
+    <div class="feedback-hero-text">
+      <h3>WAIG博士からの講評</h3>
+      <p>
+        今回のゲーム結果をもとに、意思決定のポイントを振り返ります。
+      </p>
+    </div>
+  </div>
+
+  <div id="feedback-meta" class="feedback-meta">
+    読み込み中...
+  </div>
+
+  <div id="feedback-content" class="feedback-preview">
+    読み込み中...
+  </div>
+</section>
+
+<script>
+/**
+ * @summary 講評表示画面の初期表示時に、公開済みAI講評を読み込む
+ * @function initFeedbackView
+ * @read loadFeedback()
+ * @write 講評データの読み込みを開始する
+ * @update 2026-06-30
+ */
+function initFeedbackView() {
+  loadFeedback();
+};
+
+/**
+ * @summary クライアント処理：サーバーから公開済みAI講評を取得する
+ * @function loadFeedback
+ * @read google.script.run.getPublishedAiFeedback()
+ * @write 取得成功時は renderFeedback() を実行し、失敗時は講評エリアにエラーを表示する
+ * @update 2026-06-30
+ */
+function loadFeedback() {
+  google.script.run
+    .withSuccessHandler(renderFeedback)
+    .withFailureHandler(function(error) {
+      document.getElementById('feedback-meta').innerHTML = '';
+
+      document.getElementById('feedback-content').innerHTML =
+        '<p style="color:red;">講評の取得に失敗しました。</p><pre>' +
+        escapeHtml(error.message || error) +
+        '</pre>';
+    })
+    .getPublishedAiFeedback();
+}
+
+/**
+ * @summary クライアント処理：公開済みAI講評のメタ情報と本文を画面に描画する
+ * @function renderFeedback
+ * @read data, extractDateForFeedback(), formatFeedbackMarkdown(), escapeHtml()
+ * @write feedback-meta、feedback-content、feedback-print-button-area の表示を更新する
+ * @update 2026-06-30
+ */
+function renderFeedback(data) {
+  const meta = document.getElementById('feedback-meta');
+  const content = document.getElementById('feedback-content');
+  const printArea = document.getElementById('feedback-print-button-area');
+
+  if (printArea) {
+    printArea.style.display = 'none';
+  }
+
+  if (!data || !data.success) {
+    meta.innerHTML = '';
+
+    content.innerHTML =
+      '<p>' +
+      escapeHtml(
+        (data && data.message) ||
+        'WAIG博士の講評は、まだ公開されていません。GMの案内をお待ちください。'
+      ) +
+      '</p>';
+
+    return;
+  }
+
+  if (printArea) {
+    printArea.style.display = 'block';
+  }
+
+  const playDate = extractDateForFeedback(data.timestamp || '');
+
+  meta.innerHTML =
+    '<div><b>プレイ日：</b>' +
+      escapeHtml(playDate || '-') +
+    '</div>' +
+    '<div><b>対象シナリオ：</b>' +
+      escapeHtml(data.scenarioId || '-') +
+    '</div>' +
+    '<div><b>最終Turn：</b>' +
+      escapeHtml(data.turn || '-') +
+    '</div>' +
+    '<div><b>講評保存日時：</b>' +
+      escapeHtml(data.timestamp || '-') +
+    '</div>';
+
+  content.innerHTML =
+    formatFeedbackMarkdown(data.feedbackText || '');
+}
+
+/**
+ * @summary クライアント内部処理：講評本文の簡易MarkdownをHTML表示用に変換する
+ * @function formatFeedbackMarkdown
+ * @read text, escapeHtml()
+ * @write 見出し・太字・箇条書きを反映したHTML文字列を返す
+ * @update 2026-06-30
+ */
+function formatFeedbackMarkdown(text) {
+  let normalized = String(text || '')
+    .replace(/^(\d+\.\s.*)\n\n+/gm, '$1\n')
+    .replace(/^(#{1,3}\s.*)\n\n+/gm, '$1\n')
+    .replace(/\n{3,}/g, '\n\n');
+
+  let html = escapeHtml(normalized);
+
+  html = html.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/^\* (.*)$/gm, '・$1');
+  html = html.replace(/\n/g, '<br>');
+
+  return html;
+}
+
+/**
+ * @summary クライアント内部処理：講評保存日時からプレイ日表示用の日付を抽出する
+ * @function extractDateForFeedback
+ * @read value
+ * @write yyyy/MM/dd形式の日付文字列、または先頭の日付部分を返す
+ * @update 2026-06-30
+ */
+function extractDateForFeedback(value) {
+  const text = String(value || '').trim();
+
+  if (!text) {
+    return '';
+  }
+
+  const match = text.match(/^(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);
+
+  if (match) {
+    return match[1].replace(/-/g, '/');
+  }
+
+  return text.split(' ')[0] || '';
+}
+
+/**
+ * @summary クライアント内部処理：HTML表示用に特殊文字をエスケープする
+ * @function escapeHtml
+ * @read text
+ * @write HTMLエスケープ済み文字列を返す
+ * @update 2026-06-30
+ */
+function escapeHtml(text) {
+  return String(text === null || text === undefined ? '' : text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+</script>

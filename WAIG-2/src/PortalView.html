@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title><?= appName ?></title>
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .portal-layout {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .portal-menu {
+      width: 240px;
+      flex: 0 0 240px;
+      box-sizing: border-box;
+      padding: 20px 14px;
+      overflow-y: auto;
+      background: #ffffff;
+      border-right: 1px solid #dddddd;
+    }
+
+    .portal-content {
+      flex: 1;
+      min-width: 0;
+      height: 100vh;
+    }
+
+    .portal-frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .portal-brand {
+      padding: 4px 10px 16px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid #dddddd;
+    }
+
+    .portal-brand-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1565c0;
+    }
+
+    .portal-brand-version {
+      margin-top: 5px;
+      font-size: 12px;
+      color: #666666;
+    }
+
+    .menu-heading {
+      margin: 18px 10px 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #1565c0;
+    }
+
+    .menu-link {
+      display: block;
+      padding: 8px 12px;
+      margin: 2px 0;
+      border-radius: 6px;
+      color: #222222;
+      text-decoration: none;
+    }
+
+    .menu-link:hover {
+      background: #eaf2fc;
+      color: #1565c0;
+    }
+    .portal-footer {
+      margin-top: 30px;
+      padding-top: 12px;
+      border-top: 1px solid #ddd;
+      text-align: center;
+      font-size: 11px;
+      color: #777;
+      line-height: 1.6;
+    }
+
+    .portal-license {
+    font-size: 10px;
+    color: #999;
+  }
+  </style>
+</head>
+
+<body>
+  <div class="portal-layout">
+
+    <aside class="portal-menu">
+      <div class="portal-brand">
+        <div class="portal-brand-name">
+          <?= appName ?>
+        </div>
+
+        <div class="portal-brand-version">
+          Version <?= appVersion ?>
+        </div>
+      </div>
+
+      <nav>
+        <div class="menu-heading">
+          ゲームガイド
+        </div>
+
+        <a
+          class="menu-link"
+          href="<?= homeUrl ?>"
+          target="waig-content"
+        >
+          ゲームガイド
+        </a>
+        
+        <div class="menu-heading">資料</div>
+
+        <a
+          class="menu-link"
+          href="<?= ruleUrl ?>"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ルール
+        </a>
+
+        <a
+          class="menu-link"
+          href="<?= cardListUrl ?>"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          カード一覧
+        </a>
+
+        <div class="menu-heading">ゲーム</div>
+
+        <a
+          class="menu-link"
+          href="<?= appUrl ?>?page=member"
+          target="waig-content"
+        >
+          プレイヤー登録
+        </a>
+
+        <a
+          class="menu-link"
+          href="<?= appUrl ?>?page=entry"
+          target="waig-content"
+        >
+          プレイヤー初期設定
+        </a>
+
+        <a
+          class="menu-link"
+          href="<?= appUrl ?>?page=player"
+          target="waig-content"
+        >
+          施策選択
+        </a>
+
+        <div class="menu-heading">成績・振り返り</div>
+
+        <a
+          class="menu-link"
+          href="<?= appUrl ?>?page=result"
+          target="waig-content"
+        >
+          個人成績
+        </a>
+
+        <a
+          class="menu-link"
+          href="<?= appUrl ?>?page=overall"
+          target="waig-content"
+        >
+          全体成績
+        </a>
+
+        <a
+          class="menu-link"
+          href="<?= appUrl ?>?page=history"
+          target="waig-content"
+        >
+          施策履歴
+        </a>
+
+        <a
+          class="menu-link"
+          href="<?= appUrl ?>?page=report"
+          target="waig-content"
+        >
+          レポート
+        </a>
+
+        <a
+          class="menu-link"
+          href="<?= appUrl ?>?page=feedback"
+          target="waig-content"
+        >
+          博士講評
+        </a>
+
+
+      <? if (mode === 'gm') { ?>
+
+        <div class="menu-heading">管理</div>
+
+        <a
+          class="menu-link"
+          href="<?= appUrl ?>?page=gm"
+          target="waig-content"
+        >
+          GM画面
+        </a>
+
+        <a
+          class="menu-link"
+          href="<?= appUrl ?>?page=gm_reset"
+          target="waig-content"
+        >
+          GMリセット
+        </a>
+
+      <? } ?> 
+
+      <div class="portal-footer">
+        <div>WAIG-2</div>
+        <div>Version <?= appVersion ?></div>
+
+        <div style="margin-top:8px;">
+          © 2026 KozyWorks
+        </div>
+
+        <div class="portal-license">
+          Released under the MIT License
+        </div>
+        
+        <div>
+          <a href="<?= githubUrl ?>" target="_blank">
+            GitHub Repository
+          </a>
+        </div>
+      </div>
+      
+      </nav>
+    </aside>
+
+    <main class="portal-content">
+      <iframe
+        class="portal-frame"
+        name="waig-content"
+        src="<?= homeUrl ?>"
+        title="WAIG-2 コンテンツ"
+      ></iframe>
+    </main>
+
+  </div>
+</body>
+</html>

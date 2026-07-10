@@ -1,0 +1,535 @@
+<h1>施策振り返り</h1>
+
+<section class="card">
+  <h2>施策振り返りサマリー</h2>
+  <p>
+    このゲームでよく選ばれた施策、使われなかった施策、勝者が選んだ施策を確認できます。
+  </p>
+  <div id="action-review-summary">読み込み中...</div>
+</section>
+
+<section class="card">
+  <h2>ターン別の市場環境</h2>
+  <p>
+    各ターンで発生した市場の変化と競合の変化を確認できます。
+  </p>
+  <div id="market-matrix">読み込み中...</div>
+</section>
+
+<section class="card">
+  <h2>プレイヤー別の施策履歴</h2>
+  <p>
+    各プレイヤーが、どのターンでどの施策を選んだかを確認できます。
+  </p>
+  <div id="action-matrix">
+    読み込み中...
+  </div>
+</section>
+
+<script>
+
+/**
+ * @summary 施策履歴画面の初期表示時に、市場環境一覧と施策履歴一覧を読み込む
+ * @function initActionHistoryView
+ * @read loadMarketMatrix(), loadActionMatrix()
+ * @write 市場環境エリアと施策履歴エリアの表示更新を開始する
+ * @update 2026-06-30
+ */
+function initActionHistoryView() {
+  loadActionReviewSummary();
+  loadMarketMatrix();
+  loadActionMatrix();
+};
+
+/**
+ * @summary クライアント処理：サーバーから施策振り返り集計を取得する
+ * @function loadActionReviewSummary
+ * @read google.script.run.getActionReviewSummary()
+ * @write 取得成功時は renderActionReviewSummary() を実行し、失敗時はエラー表示を更新する
+ * @update 2026-07-08
+ */
+function loadActionReviewSummary() {
+  google.script.run
+    .withSuccessHandler(renderActionReviewSummary)
+    .withFailureHandler(function(error) {
+      document.getElementById('action-review-summary').innerHTML =
+        '<p style="color:red;">施策振り返り集計の取得に失敗しました。</p><pre>' +
+        escapeHtml(error.message || error) +
+        '</pre>';
+    })
+    .getActionReviewSummary();
+}
+
+/**
+ * @summary クライアント処理：施策振り返り集計をHTMLとして描画する
+ * @function renderActionReviewSummary
+ * @read data, renderActionRankingTable(), renderPairRankingTable(), renderUnusedActionTable()
+ * @write action-review-summary 要素のinnerHTMLを更新する
+ * @update 2026-07-08
+ */
+function renderActionReviewSummary(data) {
+  const area = document.getElementById('action-review-summary');
+
+  if (!area) {
+    return;
+  }
+
+  if (!data) {
+    area.innerHTML = '<p>施策振り返りデータがありません。</p>';
+    return;
+  }
+
+  let html = '';
+
+  html += '<div class="scenario-summary-card">';
+  html += '<h3>集計対象</h3>';
+  html += '<p><b>最新完了ターン：</b>T' + escapeHtml(data.completedTurn) + '</p>';
+  html += '</div>';
+
+  html += '<h3>よく使われた施策</h3>';
+  html += renderActionRankingTable(data.actionRanking, 'action');
+
+  html += '<h3>よく使われた組み合わせ</h3>';
+  html += renderPairRankingTable(data.pairRanking);
+
+  html += '<h3>使われなかった施策</h3>';
+  html += renderUnusedActionTable(data.unusedActions);
+
+  html += '<h3>上位者が選んだ施策</h3>';
+  html += renderActionRankingTable(data.winnerActions, 'winner');
+
+  area.innerHTML = html;
+}
+
+/**
+ * @summary クライアント内部処理：施策ランキング表を生成する
+ * @function renderActionRankingTable
+ * @read rows, type
+ * @write 施策ランキングHTMLを返す
+ * @update 2026-07-08
+ */
+function renderActionRankingTable(rows, type) {
+  if (!rows || rows.length === 0) {
+    return '<p>該当データがありません。</p>';
+  }
+
+  let html = '<table>';
+  html += '<tr>';
+  html += '<th>施策</th>';
+  html += '<th>使用回数</th>';
+  html += '<th>人気度</th>';
+  html += '<th>成果度</th>';
+  html += '<th>判定</th>';
+  html += '</tr>';
+
+  rows.forEach(function(row) {
+    html += '<tr>';
+    html += '<td class="action-name-cell">' +
+      escapeHtml(row.actionLabel || row.actionId || '-') +
+      '</td>';
+    html += '<td>' + escapeHtml(row.count || 0) + '</td>';
+    html += '<td>' + escapeHtml(row.popularityStars || '-') + '</td>';
+    html += '<td>' + escapeHtml(row.performanceStars || '-') + '</td>';
+    html += '<td>' + escapeHtml(row.reviewJudge || '-') + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</table>';
+  return html;
+}
+
+/**
+ * @summary クライアント内部処理：施策組み合わせランキング表を生成する
+ * @function renderPairRankingTable
+ * @read rows
+ * @write 施策組み合わせランキングHTMLを返す
+ * @update 2026-07-08
+ */
+function renderPairRankingTable(rows) {
+  if (!rows || rows.length === 0) {
+    return '<p>該当データがありません。</p>';
+  }
+
+  let html = '<table>';
+  html += '<tr>';
+  html += '<th>組み合わせ</th>';
+  html += '<th>使用回数</th>';
+  html += '<th>人気度</th>';
+  html += '<th>成果度</th>';
+  html += '<th>判定</th>';
+  html += '</tr>';
+
+  rows.forEach(function(row) {
+    html += '<tr>';
+    html += '<td class="action-name-cell">' +
+      escapeHtml(row.pairLabel || '-') +
+      '</td>';
+    html += '<td>' + escapeHtml(row.count || 0) + '</td>';
+    html += '<td>' + escapeHtml(row.popularityStars || '-') + '</td>';
+    html += '<td>' + escapeHtml(row.performanceStars || '-') + '</td>';
+    html += '<td>' + escapeHtml(row.reviewJudge || '-') + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</table>';
+  return html;
+}
+
+
+/**
+ * @summary クライアント内部処理：未使用施策一覧表を生成する
+ * @function renderUnusedActionTable
+ * @read rows
+ * @write 未使用施策一覧HTMLを返す
+ * @update 2026-07-08
+ */
+function renderUnusedActionTable(rows) {
+  if (!rows || rows.length === 0) {
+    return '<p>未使用の施策はありません。すべての施策が使われました。</p>';
+  }
+
+  let html = '<table>';
+  html += '<tr>';
+  html += '<th>施策</th>';
+  html += '<th>効果メモ</th>';
+  html += '</tr>';
+
+  rows.forEach(function(row) {
+    html += '<tr>';
+    html += '<td class="action-name-cell">' + escapeHtml(row.actionLabel || row.actionId || '-') + '</td>';
+    html += '<td>' + escapeHtml(row.effectShort || '-') + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</table>';
+  return html;
+}
+
+/**
+ * @summary クライアント内部処理：平均順位を表示用に整形する
+ * @function formatAverageRank
+ * @read value
+ * @write 小数1桁の順位表記を返す
+ * @update 2026-07-08
+ */
+function formatAverageRank(value) {
+  if (value === null || value === undefined || isNaN(value)) {
+    return '-';
+  }
+
+  return Number(value).toFixed(1) + '位';
+}
+
+/**
+ * @summary クライアント内部処理：金額を表示用に整形する
+ * @function formatYen
+ * @read value
+ * @write 円表記を返す
+ * @update 2026-07-08
+ */
+function formatYen(value) {
+  if (value === null || value === undefined || isNaN(value)) {
+    return '-';
+  }
+
+  return Math.round(Number(value)).toLocaleString() + '円';
+}
+
+/**
+ * @summary クライアント内部処理：成長率を表示用に整形する
+ * @function formatPercent
+ * @read value
+ * @write パーセント表記を返す
+ * @update 2026-07-08
+ */
+function formatPercent(value) {
+  if (value === null || value === undefined || isNaN(value)) {
+    return '-';
+  }
+
+  return (Number(value) * 100).toFixed(1) + '%';
+}
+
+/**
+ * @summary クライアント処理：サーバーから市場環境マトリクスを取得する
+ * @function loadMarketMatrix
+ * @read google.script.run.getWatchMarketMatrix()
+ * @write 取得成功時は renderMarketMatrix() を実行し、失敗時はエラー表示を更新する
+ * @update 2026-06-30
+ */
+function loadMarketMatrix() {
+  google.script.run
+    .withSuccessHandler(renderMarketMatrix)
+    .withFailureHandler(function(error) {
+      document.getElementById('market-matrix').innerHTML =
+        '<p style="color:red;">市場環境の取得に失敗しました。</p><pre>' +
+        escapeHtml(error.message || error) +
+        '</pre>';
+    })
+    .getWatchMarketMatrix();
+}
+
+/**
+ * @summary クライアント処理：市場環境マトリクスをHTMLテーブルとして描画する
+ * @function renderMarketMatrix
+ * @read data, scenarioProfile, rows, formatEffectText(), escapeHtml()
+ * @write market-matrix 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+function renderMarketMatrix(data) {
+  const area = document.getElementById('market-matrix');
+
+  if (!area) {
+    return;
+  }
+
+  const profile = data && data.scenarioProfile ? data.scenarioProfile : {};
+  const rows = data && data.rows ? data.rows : [];
+
+  if (!rows || rows.length === 0) {
+    area.innerHTML = '<p>市場環境データがありません。</p>';
+    return;
+  }
+
+  let html = '';
+
+  html += '<div class="scenario-summary-card">';
+  html += '<h3>現在のシナリオ</h3>';
+  html += '<p><b>' +
+    escapeHtml(profile.scenarioId || '-') +
+    '｜' +
+    escapeHtml(profile.scenarioName || '名称未設定') +
+    '</b></p>';
+  html += '<p><b>難易度：</b>' + escapeHtml(profile.difficulty || '-') + '</p>';
+  html += '<p><b>意図：</b>' + escapeHtml(profile.scenarioIntent || '-') + '</p>';
+  html += '<p><b>用途：</b>' + escapeHtml(profile.recommendedUse || '-') + '</p>';
+  html += '</div>';
+
+  html += '<table>';
+  html += '<tr>';
+  html += '<th>Turn</th>';
+  html += '<th>市場の変化</th>';
+  html += '<th>市場の影響</th>';
+  html += '<th>競合の変化</th>';
+  html += '<th>競合の影響</th>';
+  html += '</tr>';
+
+  rows.forEach(function(row) {
+    html += '<tr>';
+    html += '<td>T' + escapeHtml(row.turn) + '</td>';
+    html += '<td>' + escapeHtml(row.trendLabel || row.trendId || '-') + '</td>';
+    html += '<td>' + escapeHtml(formatEffectText(row.trendEffect || '')) + '</td>';
+    html += '<td>' + escapeHtml(row.tcLabel || row.tcId || '-') + '</td>';
+    html += '<td>' + escapeHtml(formatEffectText(row.tcEffect || '')) + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</table>';
+
+  area.innerHTML = html;
+}
+
+/**
+ * @summary クライアント処理：サーバーからプレイヤー別の施策履歴マトリクスを取得する
+ * @function loadActionMatrix
+ * @read google.script.run.getWatchActionMatrix()
+ * @write 取得成功時は renderActionMatrix() を実行し、失敗時はエラー表示を更新する
+ * @update 2026-06-30
+ */
+function loadActionMatrix() {
+  google.script.run
+    .withSuccessHandler(renderActionMatrix)
+    .withFailureHandler(function(error) {
+      document.getElementById('action-matrix').innerHTML =
+        '<p style="color:red;">施策履歴の取得に失敗しました。</p><pre>' +
+        escapeHtml(error.message || error) +
+        '</pre>';
+    })
+    .getWatchActionMatrix();
+}
+
+/**
+ * @summary クライアント処理：プレイヤー別の施策履歴マトリクスをHTMLテーブルとして描画する
+ * @function renderActionMatrix
+ * @read data, buildActionMatrixPlayerCellHtml(), buildActionMatrixCellHtml()
+ * @write action-matrix 要素のinnerHTMLを更新する
+ * @update 2026-06-30
+ */
+function renderActionMatrix(data) {
+  const area = document.getElementById('action-matrix');
+
+  if (!area) {
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    area.innerHTML =
+      '<p>施策履歴データがありません。</p>' +
+      '<p>ターンが進むと、ここに各プレイヤーの施策履歴が表示されます。</p>';
+    return;
+  }
+
+  let html = '<table class="action-matrix-table">';
+  html += '<tr>';
+  html += '<th>プレイヤー</th>';
+
+  for (let turn = 1; turn <= 6; turn++) {
+    html += '<th>T' + turn + '</th>';
+  }
+
+  html += '</tr>';
+
+  data.forEach(function(group) {
+    html += '<tr>';
+
+    const groupLabel =
+      group.displayName ||
+      group.groupLabel ||
+      group.groupId ||
+      '-';
+
+    html += '<td class="player-name-cell">' +
+      buildActionMatrixPlayerCellHtml(group, groupLabel) +
+    '</td>';
+
+    for (let turn = 1; turn <= 6; turn++) {
+      const action = group.turns ? group.turns[turn] : null;
+
+      html += '<td class="action-turn-cell">';
+
+      if (!action) {
+        html += '-';
+      } else {
+        html += buildActionMatrixCellHtml(action);
+      }
+
+      html += '</td>';
+    }
+
+    html += '</tr>';
+  });
+
+  html += '</table>';
+  area.innerHTML = html;
+}
+
+/**
+ * @summary クライアント内部処理：施策履歴マトリクスのプレイヤー名セルHTMLを生成する
+ * @function buildActionMatrixPlayerCellHtml
+ * @read group, groupLabel, buildCaseMissionHtml(), escapeHtml()
+ * @write プレイヤー名とミッション情報を含むHTML文字列を返す
+ * @update 2026-06-30
+ */
+function buildActionMatrixPlayerCellHtml(group, groupLabel) {
+  let html = '';
+
+  html += '<div class="matrix-player-name">' +
+    escapeHtml(groupLabel || group.groupId || '-') +
+    '</div>';
+
+  html += '<div class="matrix-mission-info">';
+  html += buildCaseMissionHtml(group);
+  html += '</div>';
+
+  return html;
+}
+
+/**
+ * @summary クライアント内部処理：1ターン分の施策と組み合わせ効果をHTMLに整形する
+ * @function buildActionMatrixCellHtml
+ * @read action, escapeHtml()
+ * @write 施策名と組み合わせ効果を含むHTML文字列を返す
+ * @update 2026-06-30
+ */
+function buildActionMatrixCellHtml(action) {
+  let html = '';
+
+  // 新形式：actions 配列で受け取る場合
+  if (Array.isArray(action.actions) && action.actions.length > 0) {
+    action.actions.forEach(function(item) {
+      html += '<div class="action-line">' +
+        escapeHtml(item.actionLabel || item.label || '-') +
+        '</div>';
+    });
+  } else {
+    // 旧形式・互換用
+    if (action.actionLabel) {
+      html += '<div class="action-line">' +
+        escapeHtml(action.actionLabel) +
+        '</div>';
+    }
+
+    if (action.actionLabel2 || action.action2Label) {
+      html += '<div class="action-line">' +
+        escapeHtml(action.actionLabel2 || action.action2Label) +
+        '</div>';
+    }
+  }
+
+  // 組み合わせ効果
+  if (action.synergyLabel || action.synergyDescription) {
+    html += '<div class="synergy-line">';
+    html += '<div class="synergy-title">' +
+      escapeHtml(action.synergyLabel || '組み合わせ効果') +
+      '</div>';
+
+    if (action.synergyDescription) {
+      html += '<div class="synergy-desc">' +
+        escapeHtml(action.synergyDescription) +
+        '</div>';
+    }
+
+    if (action.synergyEffectShort) {
+      html += '<div class="synergy-effect">' +
+        escapeHtml(action.synergyEffectShort) +
+        '</div>';
+    }
+
+    html += '</div>';
+  }
+
+  if (!html) {
+    html = '-';
+  }
+
+  return html;
+}
+
+/**
+ * @summary クライアント内部処理：KPI略称を画面表示用の説明付き表記に変換する
+ * @function formatEffectText
+ * @read text
+ * @write KPI略称を日本語説明付きに置換した文字列を返す
+ * @update 2026-06-30
+ */
+function formatEffectText(text) {
+  if (!text) return '';
+
+  return String(text)
+    .replace(/GI/g, 'GI（一般流入）')
+    .replace(/AI/g, 'AI（広告流入）')
+    .replace(/CVR/g, 'CVR（購入率）')
+    .replace(/AOV/g, 'AOV（平均注文額）')
+    .replace(/CPC/g, 'CPC（広告単価）')
+    .replace(/ROAS/g, 'ROAS（広告費回収率）');
+}
+
+/**
+ * @summary クライアント内部処理：HTML表示用に特殊文字をエスケープする
+ * @function escapeHtml
+ * @read text
+ * @write HTMLエスケープ済み文字列を返す
+ * @update 2026-06-30
+ */
+function escapeHtml(text) {
+  return String(text === null || text === undefined ? '' : text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+</script>
+
+</body>
+</html>

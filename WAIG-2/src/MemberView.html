@@ -1,0 +1,155 @@
+  <h1>プレイヤー登録</h1>
+
+  <section class="card">
+    <p>
+      はじめに、使用するプレイヤー枠を選び、名前を登録してください。
+    </p>
+    <p>
+      登録が完了したら、左メニューの「プレイヤー初期設定」へ進んでください。
+    </p>
+
+    <select id="member-group-id">
+      <option value="">プレイヤー枠を選択</option>
+    </select>
+
+    <input
+      id="member-name"
+      type="text"
+      placeholder="名前を入力">
+
+    <button
+      type="button"
+      onclick="submitMember()">
+      プレイヤー登録する
+    </button>
+
+    <div id="member-message"></div>
+  </section>
+
+  <script>
+  /**
+ * @summary メンバー登録画面から参照し、登録可能なプレイヤー枠一覧を取得して選択欄に表示する
+ * @function loadMemberOptions
+ * @read google.script.run.getMemberGroupOptions(), member-group-id要素
+ * @write member-group-id の選択肢を更新する
+ * @update 2026-06-30
+ */
+    function loadMemberOptions() {
+  google.script.run
+    .withSuccessHandler(function(groups) {
+      const select = document.getElementById('member-group-id');
+
+      if (!select) {
+        alert('プレイヤー枠の選択欄が見つかりません。');
+        return;
+      }
+
+      // 画面を開き直したときに選択肢が重複しないよう、毎回初期化する
+      select.innerHTML =
+        '<option value="">プレイヤー枠を選択</option>';
+
+      if (!groups || groups.length === 0) {
+        select.innerHTML =
+          '<option value="">登録できるプレイヤー枠がありません</option>';
+        return;
+      }
+
+      groups.forEach(function(group) {
+        const option = document.createElement('option');
+
+        option.value =
+          group.groupId ||
+          group.id ||
+          '';
+
+        option.textContent =
+          group.displayName ||
+          group.name ||
+          group.groupId ||
+          group.id ||
+          'プレイヤー枠';
+
+        select.appendChild(option);
+      });
+    })
+    .withFailureHandler(function(error) {
+      alert(
+        'プレイヤー枠の取得に失敗しました: ' +
+        (error.message || error)
+      );
+    })
+    .getMemberGroupOptions();
+}
+
+/**
+ * @summary メンバー登録画面から実行し、選択されたプレイヤー枠に参加者名を登録する
+ * @function submitMember
+ * @read member-group-id要素, member-name要素, google.script.run.saveMember()
+ * @write メンバー登録を保存し、成功時は member-message 要素に登録結果を表示する
+ * @update 2026-06-30
+ */
+    function submitMember() {
+      const member = {
+        groupId:
+          document.getElementById('member-group-id').value,
+
+        memberName:
+          document.getElementById('member-name')
+            .value
+            .trim()
+      };
+
+      if (!member.groupId || !member.memberName) {
+        alert(
+          'プレイヤー枠を選び、名前を入力してください。'
+        );
+
+        return;
+      }
+
+      showLoading();
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          hideLoading();
+
+          document.getElementById('member-message').innerHTML =
+            '<p class="info-text">' +
+              'プレイヤー登録が完了しました。' +
+            '</p>' +
+            '<p>' +
+              '登録されたプレイヤー枠：<b>' +
+              escapeHtml(result.groupId) +
+              '</b>' +
+            '</p>' +
+            '<p>' +
+              'プレイヤー名：<b>' +
+              escapeHtml(result.name) +
+              '</b>' +
+            '</p>' +
+            '<p><b>' +
+              '次に、左メニューの「初期設定」へ進んでください。' +
+            '</b></p>';
+        })
+        .withFailureHandler(function(error) {
+          hideLoading();
+
+          alert(
+            'プレイヤー登録に失敗しました: ' +
+            (error.message || error)
+          );
+        })
+        .saveMember(member);
+    }
+
+/**
+ * @summary メンバー登録画面の初期表示時に、登録可能なプレイヤー枠を読み込む
+ * @function initMemberView
+ * @read loadMemberOptions()
+ * @write メンバー登録画面の選択肢読み込みを開始する
+ * @update 2026-06-30
+ */
+    function initMemberView() {
+       loadMemberOptions();
+   }
+</script>
